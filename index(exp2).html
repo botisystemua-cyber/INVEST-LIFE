@@ -151,14 +151,11 @@
         }
 
         /* ⭐ КНОПКИ РЕДАГУВАННЯ / ВИДАЛЕННЯ ЛІДІВ */
-        td:has(.lead-actions) {
-            min-width: 180px;
-            white-space: nowrap;
-        }
         .lead-actions {
             display: flex;
             align-items: center;
             gap: 4px;
+            width: 100%;
         }
         .btn-details-realty,
         .btn-details {
@@ -201,7 +198,7 @@
         }
         .btn-edit-lead {
             background: #f39c12;
-            margin-left: 24px;
+            margin-left: auto;
         }
         .btn-edit-lead:hover {
             background: #f5b041;
@@ -3820,7 +3817,7 @@
           ${vc.nextContact !== false ? `<td>${formatDate(lead.nextContact)}</td>` : ''}
           ${vc.daysLeft !== false ? `<td>${lead.daysLeft || '—'}</td>` : ''}
           ${vc.status !== false ? `<td>${lead.status || '—'}</td>` : ''}
-          <td>
+          <td style="min-width:200px">
             <div class="lead-actions">
               <button class="btn-details-realty" data-index="${index}">▼ Деталі</button>
               <button class="btn-edit-lead edit-lead-btn" data-lead-index="${index}" data-lead-id="${lead.id}"><span class="btn-ico">✏️</span></button>
@@ -4071,7 +4068,7 @@
           ${vc.nextContact !== false ? `<td>${formatDate(lead.nextContact)}</td>` : ''}
           ${vc.daysLeft !== false ? `<td>${lead.daysLeft || '—'}</td>` : ''}
           ${vc.status !== false ? `<td>${lead.status || '—'}</td>` : ''}
-          <td>
+          <td style="min-width:200px">
             <div class="lead-actions">
               <button class="btn-details" data-index="${index}">▼ Деталі</button>
               <button class="btn-edit-lead edit-lead-btn" data-lead-index="${index}" data-lead-id="${lead.id}"><span class="btn-ico">✏️</span></button>
