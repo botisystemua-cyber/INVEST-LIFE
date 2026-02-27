@@ -176,9 +176,7 @@
         }
         .btn-edit-lead,
         .btn-delete-lead {
-            padding: 0;
-            width: 24px;
-            height: 24px;
+            padding: 4px 14px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -189,12 +187,7 @@
             box-shadow: none;
             overflow: hidden;
             flex-shrink: 0;
-        }
-        .btn-edit-lead .btn-ico,
-        .btn-delete-lead .btn-ico {
-            display: inline-block;
-            transform: scale(0.55);
-            line-height: 1;
+            font-size: 0.75rem;
         }
         .btn-edit-lead {
             background: #f39c12;
@@ -3820,8 +3813,8 @@
           <td style="min-width:200px">
             <div class="lead-actions">
               <button class="btn-details-realty" data-index="${index}">▼ Деталі</button>
-              <button class="btn-edit-lead edit-lead-btn" data-lead-index="${index}" data-lead-id="${lead.id}"><span class="btn-ico">✏️</span></button>
-              <button class="btn-delete-lead delete-lead-btn" data-lead-index="${index}" data-lead-id="${lead.id}" data-row-index="${lead.rowIndex}"><span class="btn-ico">🗑️</span></button>
+              <button class="btn-edit-lead edit-lead-btn" data-lead-index="${index}" data-lead-id="${lead.id}">✏️</button>
+              <button class="btn-delete-lead delete-lead-btn" data-lead-index="${index}" data-lead-id="${lead.id}" data-row-index="${lead.rowIndex}">🗑️</button>
             </div>
           </td>
         </tr>
@@ -4071,8 +4064,8 @@
           <td style="min-width:200px">
             <div class="lead-actions">
               <button class="btn-details" data-index="${index}">▼ Деталі</button>
-              <button class="btn-edit-lead edit-lead-btn" data-lead-index="${index}" data-lead-id="${lead.id}"><span class="btn-ico">✏️</span></button>
-              <button class="btn-delete-lead delete-lead-btn" data-lead-index="${index}" data-lead-id="${lead.id}" data-row-index="${lead.rowIndex}"><span class="btn-ico">🗑️</span></button>
+              <button class="btn-edit-lead edit-lead-btn" data-lead-index="${index}" data-lead-id="${lead.id}">✏️</button>
+              <button class="btn-delete-lead delete-lead-btn" data-lead-index="${index}" data-lead-id="${lead.id}" data-row-index="${lead.rowIndex}">🗑️</button>
             </div>
           </td>
         </tr>
