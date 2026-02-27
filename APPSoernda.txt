@@ -1,0 +1,876 @@
+// ================================
+// CRM ІНВЕСТ ЛАЙФ - GOOGLE APPS SCRIPT v1.1
+// ОРЕНДА (Подобово / Сезонна / Довгострокова / Управління)
+// ОНОВЛЕНО: Додано колонку V - ПІБ (fullName)
+// ================================
+
+const SHEET_PROPERTIES = {
+  leadsSheet: "Оренда",
+  usersSheet: "Оренда доступи",
+  logsSheet: "Оренда логи"
+};
+
+// ===== DEBUG LOGGING =====
+function debugLog(message) {
+  console.log(message);
+  Logger.log(message);
+}
+
+// ===== ІНІЦІАЛІЗАЦІЯ ПРИ ВІДКРИТТІ =====
+function onOpen(e) {
+  addConditionalFormattingForStatusText();
+}
+
+// ================================
+// ГОЛОВНИЙ ОБРОБНИК ЗАПИТІВ
+// ================================
+
+function doPost(e) {
+  try {
+    const request = JSON.parse(e.postData.contents);
+    const action = request.action;
+    const payload = request.payload || {};
+
+    debugLog("📨 doPost ОРЕНДА action: " + action);
+    debugLog("📦 payload: " + JSON.stringify(payload));
+
+    let result;
+
+    switch (action) {
+      case "authenticate":
+        result = authenticate(payload.email, payload.password);
+        break;
+      case "getLeads":
+        result = getLeads(payload.manager, payload.type);
+        break;
+      case "getAllLeads":
+        result = getAllLeads(payload.type);
+        break;
+      case "getAllLeadsNoFilter":
+        result = getAllLeadsNoFilter(payload.manager, payload.userRole);
+        break;
+      case "addLead":
+        result = addLead(payload);
+        break;
+      case "updateLead":
+        result = updateLead(payload.leadId, payload);
+        break;
+      case "softDeleteLead":
+        result = softDeleteLead(payload.leadId, payload.rowIndex);
+        break;
+      case "getStats":
+        result = getStats(payload);
+        break;
+      case "getAllUsers":
+        result = getAllUsers();
+        break;
+      case "addUser":
+        result = addUser(payload.email, payload.name, payload.role, payload.password);
+        break;
+      case "updateUser":
+        result = updateUser(payload.email, payload);
+        break;
+      case "deleteUser":
+        result = deleteUser(payload.email);
+        break;
+      case "getAvailableStages":
+        result = getAvailableStages();
+        break;
+      default:
+        result = { success: false, error: "Невідома дія: " + action };
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    debugLog("❌ doPost ERROR: " + error.toString());
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: false,
+        error: "Помилка сервера: " + error.toString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({
+      status: "OK",
+      message: "CRM Оренда API працює!",
+      version: "1.2",
+      sheets: SHEET_PROPERTIES
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ================================
+// АУТЕНТИФІКАЦІЯ
+// ================================
+
+function authenticate(email, password) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.usersSheet);
+    
+    if (!sheet) {
+      debugLog("❌ ТАБЛИЦЯ НЕ ЗНАЙДЕНА: " + SHEET_PROPERTIES.usersSheet);
+      return { success: false, error: "Аркуш '" + SHEET_PROPERTIES.usersSheet + "' не знайдено" };
+    }
+
+    const lastRow = sheet.getLastRow();
+    debugLog("🔐 === AUTHENTICATE ОРЕНДА START ===");
+    debugLog("📧 Email: " + email);
+
+    if (lastRow < 2) {
+      return { success: false, error: "❌ Немає користувачів в системі" };
+    }
+
+    const data = sheet.getRange("A2:E" + lastRow).getValues();
+
+    for (let i = 0; i < data.length; i++) {
+      if (data[i][0] === email || data[i][0] == email) {
+        debugLog("✅ EMAIL ЗНАЙДЕНО!");
+        const userPassword = data[i][4];
+        
+        if (password === userPassword || password == userPassword) {
+          debugLog("✅ ПАРОЛЬ ПРАВИЛЬНИЙ!");
+          if (data[i][3] === "Активний") {
+            debugLog("✅ СТАТУС АКТИВНИЙ - SUCCESS!");
+            logOperation("Вхід в систему", "", email, "Роль: " + data[i][1]);
+            
+            return {
+              success: true,
+              email: email,
+              name: data[i][2],
+              role: data[i][1],
+              department: "rent"  // ⭐ Вказуємо що це відділ Оренди
+            };
+          } else {
+            return { success: false, error: "❌ Акаунт неактивний" };
+          }
+        } else {
+          return { success: false, error: "❌ Неправильний пароль" };
+        }
+      }
+    }
+
+    return { success: false, error: "❌ Email не знайдено в системі" };
+  } catch (error) {
+    debugLog("❌ AUTHENTICATE ERROR: " + error.toString());
+    return { success: false, error: "Помилка аутентифікації: " + error.toString() };
+  }
+}
+
+// ================================
+// ОТРИМАННЯ ЛІДІВ
+// ================================
+
+function getLeads(manager, type) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.leadsSheet);
+    const lastRow = sheet.getLastRow();
+    
+    debugLog("getLeads ОРЕНДА: manager=" + manager + ", type=" + type);
+
+    if (lastRow < 2) {
+      return { success: true, leads: [] };
+    }
+
+    // A:W (23 колонки)
+    const data = sheet.getRange("A2:W" + lastRow).getValues();
+    const leads = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      if (!row || !row[0]) continue;
+      
+      const leadType = row[4];     // E - Тип
+      const leadManager = row[5];  // F - Менеджер
+      
+      if (leadType !== type) continue;
+      
+      if (leadManager === manager || leadManager == manager) {
+        leads.push(buildLeadObject(row, i + 2));
+      }
+    }
+
+    debugLog("getLeads ОРЕНДА: Знайдено " + leads.length + " лідів");
+    return { success: true, leads: leads };
+  } catch (error) {
+    debugLog("getLeads ERROR: " + error.toString());
+    return { success: false, error: "Помилка getLeads: " + error.toString() };
+  }
+}
+
+function getAllLeads(type) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.leadsSheet);
+    const lastRow = sheet.getLastRow();
+
+    debugLog("getAllLeads ОРЕНДА: type=" + type);
+
+    if (lastRow < 2) {
+      return { success: true, leads: [] };
+    }
+
+    // A:W (23 колонки)
+    const data = sheet.getRange("A2:W" + lastRow).getValues();
+    const leads = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      if (row && row[0]) {
+        const leadType = row[4];
+        if (leadType === type || leadType == type) {
+          leads.push(buildLeadObject(row, i + 2));
+        }
+      }
+    }
+
+    debugLog("getAllLeads ОРЕНДА: Всього " + leads.length + " лідів типу " + type);
+    return { success: true, leads: leads };
+  } catch (error) {
+    debugLog("getAllLeads ERROR: " + error.toString());
+    return { success: false, error: "Помилка getAllLeads: " + error.toString() };
+  }
+}
+
+// ================================
+// ОТРИМАННЯ ВСІХ ЛІДІВ БЕЗ ФІЛЬТРА ПО ТИПУ
+// ================================
+
+function getAllLeadsNoFilter(manager, userRole) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.leadsSheet);
+    const lastRow = sheet.getLastRow();
+
+    debugLog("getAllLeadsNoFilter ОРЕНДА: manager=" + manager + ", role=" + userRole);
+
+    if (lastRow < 2) {
+      return { success: true, leads: [] };
+    }
+
+    // A:W (23 колонки)
+    const data = sheet.getRange("A2:W" + lastRow).getValues();
+    const leads = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      if (!row || !row[0]) continue;
+      
+      // Якщо Manager — фільтруємо по менеджеру, якщо Admin — беремо все
+      if (userRole === 'Admin' || row[5] === manager || row[5] == manager) {
+        leads.push(buildLeadObject(row, i + 2));
+      }
+    }
+
+    debugLog("getAllLeadsNoFilter ОРЕНДА: Всього " + leads.length + " лідів");
+    return { success: true, leads: leads };
+  } catch (error) {
+    debugLog("getAllLeadsNoFilter ERROR: " + error.toString());
+    return { success: false, error: "Помилка getAllLeadsNoFilter: " + error.toString() };
+  }
+}
+
+// ================================
+// ПОБУДОВА ОБ'ЄКТУ ЛІДА (ОРЕНДА)
+// ================================
+
+function buildLeadObject(row, rowIndex) {
+  return {
+    id: row[0],              // A - ID
+    phone: row[1],           // B - Телефон
+    source: row[2],          // C - Джерело
+    language: row[3],        // D - Мова
+    type: row[4],            // E - Тип (Подобово/Сезонна/Довгострокова/Управління)
+    manager: row[5],         // F - Менеджер
+    stage: row[6],           // G - Поточний етап
+    nextContact: row[7],     // H - Дата наступного контакту
+    daysLeft: row[8],        // I - Днів залишилось (формула)
+    status: row[9],          // J - Просрочено? (формула)
+    budget: row[10],         // K - Бюджет
+    roomsCondition: row[11], // L - Кімнати/Стан
+    petsFormat: row[12],     // M - Тварини/Формат
+    people: row[13],         // N - Люди
+    termType: row[14],       // O - Термін/Тип об'єкту
+    dateSeason: row[15],     // P - Дата/Сезон
+    district: row[16],       // Q - Район
+    nextAction: row[17],     // R - Наступна дія
+    comment: row[18],        // S - Коментар
+    dateAdded: row[19],      // T - Дата додавання
+    contactTime: row[20],    // U - Час наступного контакту
+    fullName: row[21],       // V - ПІБ
+    deletedStatus: row[22],  // W - Статус (ВИДАЛЕНО)
+    rowIndex: rowIndex       // Номер рядка
+  };
+}
+
+// ================================
+// ДОДАВАННЯ ЛІДА
+// ================================
+
+function addLead(payload) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.leadsSheet);
+    const nextRow = sheet.getLastRow() + 1;
+    const userEmail = Session.getActiveUser().getEmail() || "admin@system";
+
+    // Генерую ID
+    const leadId = generateLeadId(payload.manager);
+
+    debugLog("addLead ОРЕНДА: Створюю ліда " + leadId + " для " + payload.manager);
+
+    // Записую дані (A-V)
+    sheet.getRange(nextRow, 1).setValue(leadId);                    // A - ID
+    sheet.getRange(nextRow, 2).setValue(payload.phone || '');       // B - Телефон
+    sheet.getRange(nextRow, 3).setValue(payload.source || '');      // C - Джерело
+    sheet.getRange(nextRow, 4).setValue(payload.language || 'Українська'); // D - Мова
+    sheet.getRange(nextRow, 5).setValue(payload.type || '');        // E - Тип
+    sheet.getRange(nextRow, 6).setValue(payload.manager || '');     // F - Менеджер
+    sheet.getRange(nextRow, 7).setValue('Етап_1_Контакт');          // G - Етап
+    sheet.getRange(nextRow, 8).setValue(payload.nextContact || ''); // H - Дата контакту
+    
+    // I, J - формули
+    sheet.getRange(nextRow, 9).setFormula('=IF(H' + nextRow + '="";"";H' + nextRow + '-TODAY())');
+    sheet.getRange(nextRow, 10).setFormula('=IF(I' + nextRow + '="";"";IF(I' + nextRow + '<0;"ПРОСРОЧЕНО";IF(I' + nextRow + '<=2;"СКОРО";"OK")))');
+    
+    sheet.getRange(nextRow, 11).setValue(payload.budget || '');         // K - Бюджет
+    sheet.getRange(nextRow, 12).setValue(payload.roomsCondition || ''); // L - Кімнати/Стан
+    sheet.getRange(nextRow, 13).setValue(payload.petsFormat || '');     // M - Тварини/Формат
+    sheet.getRange(nextRow, 14).setValue(payload.people || '');         // N - Люди
+    sheet.getRange(nextRow, 15).setValue(payload.termType || '');       // O - Термін/Тип об'єкту
+    sheet.getRange(nextRow, 16).setValue(payload.dateSeason || '');     // P - Дата/Сезон
+    sheet.getRange(nextRow, 17).setValue(payload.district || '');       // Q - Район
+    sheet.getRange(nextRow, 18).setValue(payload.nextAction || '');     // R - Наступна дія
+    sheet.getRange(nextRow, 19).setValue(payload.comment || '');        // S - Коментар
+    sheet.getRange(nextRow, 20).setValue(new Date());                   // T - Дата додавання
+    sheet.getRange(nextRow, 21).setValue(payload.contactTime || '');    // U - Час контакту
+    sheet.getRange(nextRow, 22).setValue(payload.fullName || '');       // V - ПІБ
+
+    logOperation("Додав ліда", leadId, userEmail, "Тип: " + payload.type + ", Менеджер: " + payload.manager + ", ПІБ: " + (payload.fullName || "—"));
+
+    return { success: true, leadId: leadId, message: "Ліда додано!" };
+  } catch (error) {
+    debugLog("addLead ERROR: " + error.toString());
+    return { success: false, error: "Помилка addLead: " + error.toString() };
+  }
+}
+
+// ================================
+// М'ЯКЕ ВИДАЛЕННЯ ЛІДА (позначка ВИДАЛЕНО в колонку W)
+// ================================
+
+function softDeleteLead(leadId, rowIndex) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.leadsSheet);
+    const userEmail = Session.getActiveUser().getEmail() || "admin@system";
+    
+    let targetRow = null;
+    
+    if (rowIndex && rowIndex > 1) {
+      targetRow = rowIndex;
+    } else {
+      const data = sheet.getRange("A:A").getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][0] === leadId) {
+          targetRow = i + 1;
+          break;
+        }
+      }
+    }
+    
+    if (!targetRow) {
+      return { success: false, error: "Ліда не знайдено" };
+    }
+    
+    // W = колонка 23 — записуємо ВИДАЛЕНО
+    sheet.getRange(targetRow, 23).setValue("ВИДАЛЕНО");
+    
+    logOperation("Видалив ліда (soft)", leadId, userEmail, "Позначено як ВИДАЛЕНО");
+    
+    return { success: true, message: "Ліда позначено як видалено" };
+  } catch (error) {
+    debugLog("softDeleteLead ERROR: " + error.toString());
+    return { success: false, error: "Помилка softDeleteLead: " + error.toString() };
+  }
+}
+
+// ================================
+// ОНОВЛЕННЯ ЛІДА
+// ================================
+
+function updateLead(leadId, payload) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.leadsSheet);
+    const userEmail = Session.getActiveUser().getEmail() || "admin@system";
+    
+    debugLog("updateLead ОРЕНДА: leadId=" + leadId + ", rowIndex=" + payload.rowIndex);
+    
+    let targetRow = null;
+    
+    // Якщо є rowIndex — використовуємо його
+    if (payload.rowIndex && payload.rowIndex > 1) {
+      targetRow = payload.rowIndex;
+    } else {
+      // Шукаємо по ID
+      const data = sheet.getRange("A:A").getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][0] === leadId) {
+          targetRow = i + 1;
+          break;
+        }
+      }
+    }
+    
+    if (!targetRow) {
+      return { success: false, error: "Ліда не знайдено" };
+    }
+    
+    // Читаю 22 колонки (A:V)
+    const rowData = sheet.getRange(targetRow, 1, 1, 23).getValues()[0];
+    let changes = [];
+    
+    // Оновлюю поля
+    if (payload.phone !== undefined && payload.phone !== rowData[1]) {
+      changes.push("Телефон: " + rowData[1] + " → " + payload.phone);
+      sheet.getRange(targetRow, 2).setValue(payload.phone);
+    }
+    if (payload.source !== undefined && payload.source !== rowData[2]) {
+      changes.push("Джерело: " + rowData[2] + " → " + payload.source);
+      sheet.getRange(targetRow, 3).setValue(payload.source);
+    }
+    if (payload.language !== undefined && payload.language !== rowData[3]) {
+      changes.push("Мова: " + rowData[3] + " → " + payload.language);
+      sheet.getRange(targetRow, 4).setValue(payload.language);
+    }
+    if (payload.type !== undefined && payload.type !== rowData[4]) {
+      changes.push("Тип: " + rowData[4] + " → " + payload.type);
+      sheet.getRange(targetRow, 5).setValue(payload.type);
+    }
+    if (payload.manager !== undefined && payload.manager !== rowData[5]) {
+      changes.push("Менеджер: " + rowData[5] + " → " + payload.manager);
+      sheet.getRange(targetRow, 6).setValue(payload.manager);
+    }
+    if (payload.stage !== undefined && payload.stage !== rowData[6]) {
+      changes.push("Етап: " + rowData[6] + " → " + payload.stage);
+      sheet.getRange(targetRow, 7).setValue(payload.stage);
+    }
+    if (payload.nextContact !== undefined && payload.nextContact !== rowData[7]) {
+      changes.push("Дата контакту: " + rowData[7] + " → " + payload.nextContact);
+      sheet.getRange(targetRow, 8).setValue(payload.nextContact);
+      sheet.getRange(targetRow, 9).setFormula('=IF(H' + targetRow + '="";"";H' + targetRow + '-TODAY())');
+      sheet.getRange(targetRow, 10).setFormula('=IF(I' + targetRow + '="";"";IF(I' + targetRow + '<0;"ПРОСРОЧЕНО";IF(I' + targetRow + '<=2;"СКОРО";"OK")))');
+    }
+    if (payload.budget !== undefined && payload.budget !== rowData[10]) {
+      changes.push("Бюджет: " + rowData[10] + " → " + payload.budget);
+      sheet.getRange(targetRow, 11).setValue(payload.budget);
+    }
+    if (payload.roomsCondition !== undefined && payload.roomsCondition !== rowData[11]) {
+      changes.push("Кімнати/Стан: " + rowData[11] + " → " + payload.roomsCondition);
+      sheet.getRange(targetRow, 12).setValue(payload.roomsCondition);
+    }
+    if (payload.petsFormat !== undefined && payload.petsFormat !== rowData[12]) {
+      changes.push("Тварини/Формат: " + rowData[12] + " → " + payload.petsFormat);
+      sheet.getRange(targetRow, 13).setValue(payload.petsFormat);
+    }
+    if (payload.people !== undefined && payload.people !== rowData[13]) {
+      changes.push("Люди: " + rowData[13] + " → " + payload.people);
+      sheet.getRange(targetRow, 14).setValue(payload.people);
+    }
+    if (payload.termType !== undefined && payload.termType !== rowData[14]) {
+      changes.push("Термін/Тип: " + rowData[14] + " → " + payload.termType);
+      sheet.getRange(targetRow, 15).setValue(payload.termType);
+    }
+    if (payload.dateSeason !== undefined && payload.dateSeason !== rowData[15]) {
+      changes.push("Дата/Сезон: " + rowData[15] + " → " + payload.dateSeason);
+      sheet.getRange(targetRow, 16).setValue(payload.dateSeason);
+    }
+    if (payload.district !== undefined && payload.district !== rowData[16]) {
+      changes.push("Район: " + rowData[16] + " → " + payload.district);
+      sheet.getRange(targetRow, 17).setValue(payload.district);
+    }
+    if (payload.nextAction !== undefined && payload.nextAction !== rowData[17]) {
+      changes.push("Наступна дія: " + rowData[17] + " → " + payload.nextAction);
+      sheet.getRange(targetRow, 18).setValue(payload.nextAction);
+    }
+    if (payload.comment !== undefined && payload.comment !== rowData[18]) {
+      changes.push("Коментар: " + rowData[18] + " → " + payload.comment);
+      sheet.getRange(targetRow, 19).setValue(payload.comment);
+    }
+    if (payload.contactTime !== undefined && payload.contactTime !== rowData[20]) {
+      changes.push("Час контакту: " + rowData[20] + " → " + payload.contactTime);
+      sheet.getRange(targetRow, 21).setValue(payload.contactTime);
+    }
+    // ⭐ НОВЕ ПОЛЕ: ПІБ (колонка V = 22)
+    if (payload.fullName !== undefined && payload.fullName !== rowData[21]) {
+      changes.push("ПІБ: " + (rowData[21] || "—") + " → " + payload.fullName);
+      sheet.getRange(targetRow, 22).setValue(payload.fullName);
+    }
+    
+    if (changes.length > 0) {
+      logOperation("Редагував ліда", leadId, userEmail, changes.join(" | "));
+      return { success: true, message: "Редаговано " + changes.length + " полей", changes: changes };
+    } else {
+      return { success: true, message: "Немає змін" };
+    }
+  } catch (error) {
+    debugLog("updateLead ERROR: " + error.toString());
+    return { success: false, error: "Помилка updateLead: " + error.toString() };
+  }
+}
+
+// ================================
+// СТАТИСТИКА
+// ================================
+
+function getStats(payload) {
+  try {
+    const userRole = payload.userRole;
+    const userName = payload.userName;
+    const type = payload.type;
+    
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.leadsSheet);
+    const lastRow = sheet.getLastRow();
+
+    debugLog("getStats ОРЕНДА: role=" + userRole + ", name=" + userName + ", type=" + type);
+
+    // Ініціалізую етапи для ОРЕНДИ
+    const stageNames = {
+      'Етап_1_Контакт': '1️⃣ Контакт',
+      'Етап_2_Кваліфікація': '2️⃣ Кваліфікація',
+      'Етап_3_Підбір': '3️⃣ Підбір',
+      'Етап_4_Покази': '4️⃣ Покази',
+      'Етап_5_Намір': '5️⃣ Намір',
+      'Етап_6_Договір': '6️⃣ Договір',
+      'Етап_7_Заселення': '7️⃣ Заселення',
+      'Етап_8_Виселення': '8️⃣ Виселення'
+    };
+
+    const stats = {
+      totalCount: 0,
+      totalSum: 0,
+      type: type,
+      stages: {}
+    };
+
+    // Ініціалізую всі етапи
+    Object.keys(stageNames).forEach(stageKey => {
+      stats.stages[stageKey] = {
+        name: stageNames[stageKey],
+        count: 0,
+        sum: 0,
+        newToday: 0
+      };
+    });
+
+    if (lastRow < 2) {
+      return { success: true, stats: stats };
+    }
+
+    const data = sheet.getRange("A2:T" + lastRow).getValues();
+    
+    // Сьогодишня дата
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      if (!row[0]) continue;
+      
+      const leadType = row[4];     // E - Тип
+      const leadManager = row[5];  // F - Менеджер
+      const stage = row[6];        // G - Поточний етап
+      const budget = row[10];      // K - Бюджет
+      const dateAdded = row[19];   // T - Дата додавання
+
+      // Фільтр по типу
+      if (leadType !== type) continue;
+      
+      // Фільтр по ролі
+      if (userRole === 'Manager' && leadManager !== userName) continue;
+
+      // Парсимо бюджет
+      const parsedBudget = parseBudget(budget);
+
+      // Рахуємо статистику
+      if (stage && stats.stages[stage]) {
+        stats.stages[stage].count++;
+        stats.stages[stage].sum += parsedBudget;
+        stats.totalCount++;
+        stats.totalSum += parsedBudget;
+
+        // Перевіряю чи ліда додано сьогодні
+        if (dateAdded) {
+          const leadDate = new Date(dateAdded);
+          leadDate.setHours(0, 0, 0, 0);
+          if (leadDate.getTime() === today.getTime()) {
+            stats.stages[stage].newToday++;
+          }
+        }
+      }
+    }
+
+    // Обраховую додаткові метрики
+    Object.keys(stats.stages).forEach(stageKey => {
+      const stage = stats.stages[stageKey];
+      stage.avgBudget = stage.count > 0 ? Math.round(stage.sum / stage.count) : 0;
+      stage.percentSum = stats.totalSum > 0 ? Math.round((stage.sum / stats.totalSum) * 100) : 0;
+      stage.percentLeads = stats.totalCount > 0 ? Math.round((stage.count / stats.totalCount) * 100) : 0;
+    });
+
+    debugLog("getStats ОРЕНДА: totalCount=" + stats.totalCount + ", totalSum=" + stats.totalSum);
+
+    return {
+      success: true,
+      role: userRole,
+      stats: stats
+    };
+  } catch (error) {
+    debugLog("getStats ERROR: " + error.toString());
+    return { success: false, error: "Помилка getStats: " + error.toString() };
+  }
+}
+
+// Функція парсингу бюджету
+function parseBudget(budgetString) {
+  if (!budgetString) return 0;
+  budgetString = budgetString.toString().trim();
+  
+  // Замінюю різні типи дефісів
+  budgetString = budgetString.replace(/[–—−]/g, '-');
+  
+  // Якщо є дефіс - беремо ВЕРХНЮ межу
+  if (budgetString.includes('-')) {
+    const cleaned = budgetString.replace(/[^\d\-]/g, '');
+    const parts = cleaned.split('-').filter(p => p.length > 0);
+    if (parts.length >= 2) {
+      const upperBound = parseInt(parts[parts.length - 1]);
+      if (!isNaN(upperBound) && upperBound > 0) {
+        return upperBound;
+      }
+    }
+  }
+  
+  // Якщо не діапазон - беремо просто число
+  const cleaned = budgetString.replace(/[^\d]/g, '');
+  return parseInt(cleaned) || 0;
+}
+
+// ================================
+// КОРИСТУВАЧІ
+// ================================
+
+function getAllUsers() {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.usersSheet);
+    const lastRow = sheet.getLastRow();
+
+    if (lastRow < 2) {
+      return { success: true, users: [] };
+    }
+
+    const data = sheet.getRange("A2:E" + lastRow).getValues();
+    const users = data
+      .filter(row => row[0])
+      .map(row => ({
+        email: row[0],
+        role: row[1],
+        name: row[2],
+        status: row[3]
+      }));
+
+    return { success: true, users: users };
+  } catch (error) {
+    return { success: false, error: "Помилка getAllUsers: " + error.toString() };
+  }
+}
+
+function addUser(email, name, role, password) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.usersSheet);
+    const data = sheet.getRange("A:A").getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === email) {
+        return { success: false, error: "Email вже існує" };
+      }
+    }
+
+    const nextRow = sheet.getLastRow() + 1;
+    sheet.getRange(nextRow, 1).setValue(email);
+    sheet.getRange(nextRow, 2).setValue(role);
+    sheet.getRange(nextRow, 3).setValue(name);
+    sheet.getRange(nextRow, 4).setValue("Активний");
+    sheet.getRange(nextRow, 5).setValue(password);
+
+    logOperation("Додав користувача", "", Session.getActiveUser().getEmail(), name + " - " + role);
+
+    return { success: true, message: "Користувач додано" };
+  } catch (error) {
+    return { success: false, error: "Помилка addUser: " + error.toString() };
+  }
+}
+
+function updateUser(email, payload) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.usersSheet);
+    const data = sheet.getRange("A:E").getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === email) {
+        if (payload.name) sheet.getRange(i + 1, 3).setValue(payload.name);
+        if (payload.role) sheet.getRange(i + 1, 2).setValue(payload.role);
+        if (payload.status) sheet.getRange(i + 1, 4).setValue(payload.status);
+        if (payload.password) sheet.getRange(i + 1, 5).setValue(payload.password);
+        
+        logOperation("Оновив користувача", "", Session.getActiveUser().getEmail(), email);
+        return { success: true, message: "Користувач оновлено" };
+      }
+    }
+
+    return { success: false, error: "Користувач не знайдено" };
+  } catch (error) {
+    return { success: false, error: "Помилка updateUser: " + error.toString() };
+  }
+}
+
+function deleteUser(email) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.usersSheet);
+    const data = sheet.getRange("A:A").getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === email) {
+        sheet.deleteRow(i + 1);
+        logOperation("Видалив користувача", "", Session.getActiveUser().getEmail(), email);
+        return { success: true, message: "Користувач видалено" };
+      }
+    }
+
+    return { success: false, error: "Користувач не знайдено" };
+  } catch (error) {
+    return { success: false, error: "Помилка deleteUser: " + error.toString() };
+  }
+}
+
+// ================================
+// ЕТАПИ
+// ================================
+
+function getAvailableStages() {
+  return {
+    success: true,
+    stages: [
+      "Етап_1_Контакт",
+      "Етап_2_Кваліфікація",
+      "Етап_3_Підбір",
+      "Етап_4_Покази",
+      "Етап_5_Намір",
+      "Етап_6_Договір",
+      "Етап_7_Заселення",
+      "Етап_8_Виселення"
+    ]
+  };
+}
+
+// ================================
+// ГЕНЕРАЦІЯ ID
+// ================================
+
+function generateLeadId(managerName) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.leadsSheet);
+  const data = sheet.getRange("A:A").getValues();
+  
+  let maxNum = 0;
+  const prefix = managerName + "-";
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] && data[i][0].toString().startsWith(prefix)) {
+      const num = parseInt(data[i][0].toString().substring(prefix.length));
+      if (num > maxNum) maxNum = num;
+    }
+  }
+  
+  return prefix + String(maxNum + 1).padStart(4, '0');
+}
+
+// ================================
+// ЛОГУВАННЯ
+// ================================
+
+function logOperation(action, leadId, email, details) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.logsSheet);
+    if (!sheet) {
+      debugLog("⚠️ Лист логів не знайдено");
+      return;
+    }
+    
+    const nextRow = sheet.getLastRow() + 1;
+    sheet.getRange(nextRow, 1).setValue(new Date());
+    sheet.getRange(nextRow, 2).setValue(email);
+    sheet.getRange(nextRow, 3).setValue(action);
+    sheet.getRange(nextRow, 4).setValue(leadId);
+    sheet.getRange(nextRow, 5).setValue("OK");
+    sheet.getRange(nextRow, 6).setValue(details);
+  } catch (error) {
+    debugLog("logOperation ERROR: " + error.toString());
+  }
+}
+
+// ================================
+// ФОРМАТУВАННЯ
+// ================================
+
+function addConditionalFormattingForStatusText() {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.leadsSheet);
+    if (!sheet) return;
+    
+    const lastRow = Math.max(sheet.getLastRow(), 100);
+    const statusRange = sheet.getRange("J2:J" + lastRow);
+    
+    // Очищаю старі правила
+    const rules = sheet.getConditionalFormatRules();
+    const newRules = rules.filter(rule => {
+      const ranges = rule.getRanges();
+      return !ranges.some(r => r.getA1Notation().startsWith("J"));
+    });
+    
+    // ПРОСРОЧЕНО - червоний
+    const overdueRule = SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo("ПРОСРОЧЕНО")
+      .setBackground("#FF6B6B")
+      .setFontColor("#FFFFFF")
+      .setBold(true)
+      .setRanges([statusRange])
+      .build();
+    
+    // СКОРО - жовтий
+    const soonRule = SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo("СКОРО")
+      .setBackground("#FFD93D")
+      .setFontColor("#000000")
+      .setBold(true)
+      .setRanges([statusRange])
+      .build();
+    
+    // OK - зелений
+    const okRule = SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo("OK")
+      .setBackground("#6BCB77")
+      .setFontColor("#FFFFFF")
+      .setBold(true)
+      .setRanges([statusRange])
+      .build();
+    
+    newRules.push(overdueRule, soonRule, okRule);
+    sheet.setConditionalFormatRules(newRules);
+    
+    debugLog("✅ Форматування статусів застосовано");
+  } catch (error) {
+    debugLog("addConditionalFormattingForStatusText ERROR: " + error.toString());
+  }
+}
