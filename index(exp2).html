@@ -1343,11 +1343,90 @@
         .mobile-card-days.on-time { color: #00B050; }
 
         .mobile-card-id {
-            font-size: 0.65rem;
-            color: #aaa;
+            font-size: 0.72rem;
+            color: #1F4E78;
+            font-weight: 700;
             position: absolute;
             top: 0.4rem;
             right: 0.6rem;
+            background: #e8f0fe;
+            padding: 1px 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+        .mobile-card-id:active {
+            background: #4472C4;
+            color: white;
+        }
+
+        .mobile-card-source {
+            font-size: 0.72rem;
+            color: #888;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 40%;
+            text-align: right;
+        }
+
+        /* Деталі в мобільній картці */
+        .mobile-card-details {
+            margin-top: 0.6rem;
+            padding-top: 0.6rem;
+            border-top: 1px dashed #d0d7e0;
+            animation: slideDown 0.2s ease;
+        }
+        .mobile-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .mobile-detail-item {
+            background: #f5f7fa;
+            border-radius: 6px;
+            padding: 6px 8px;
+        }
+        .mobile-detail-label {
+            font-size: 0.65rem;
+            color: #888;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .mobile-detail-value {
+            font-size: 0.8rem;
+            color: #1a1a1a;
+            font-weight: 600;
+            display: block;
+            margin-top: 1px;
+            word-break: break-word;
+        }
+        .mobile-detail-comment {
+            grid-column: 1 / -1;
+        }
+        .mobile-card-actions {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .mobile-card-actions-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+        .mobile-card-edit-btn {
+            background: #f39c12;
+            color: white;
+        }
+        .mobile-lead-card.card-expanded {
+            box-shadow: 0 4px 16px rgba(31,78,120,0.18);
+            border-left-color: #4472C4;
         }
 
         /* --- FAB кнопка (прихована на десктопі) --- */
@@ -1438,43 +1517,19 @@
                 box-shadow: 0 0 8px rgba(255,255,255,0.3);
             }
 
-            /* Оренда: розгортаємо всі 4 піли замість дропдауна */
-            .rent-dropdown {
-                display: contents;
-            }
-            .rent-pill {
-                display: none !important;
-            }
+            /* Оренда: нормальний dropdown на мобілці */
             .rent-dropdown-menu {
-                display: flex !important;
-                position: static !important;
-                transform: none !important;
-                background: transparent !important;
-                box-shadow: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                gap: 0.4rem;
-                min-width: auto !important;
-                animation: none !important;
+                min-width: 150px;
             }
             .rent-option {
-                background: rgba(255,255,255,0.18) !important;
-                border: 1.5px solid rgba(255,255,255,0.5) !important;
-                border-radius: 20px !important;
-                padding: 0.3rem 0.7rem !important;
-                font-size: 0.75rem !important;
-                font-weight: 600 !important;
-                color: white !important;
-                white-space: nowrap;
-            }
-            .rent-option:hover {
-                background: rgba(255,255,255,0.3) !important;
+                font-size: 0.8rem !important;
+                padding: 8px 14px !important;
             }
 
             /* --- КОНТЕЙНЕР --- */
             .container {
                 padding: 0.6rem 0.4rem;
-                padding-top: calc(0.6rem + 110px);
+                padding-top: calc(0.6rem + 120px);
             }
 
             .section-title {
@@ -1579,6 +1634,46 @@
             #editSidebarRent,
             #filtersSidebar {
                 width: 100% !important;
+            }
+
+            /* --- ФІЛЬТР-САЙДБАР РЕДИЗАЙН НА МОБІЛЦІ --- */
+            #filtersSidebar {
+                padding-top: 0 !important;
+            }
+            #filtersSidebar #filtersContainer {
+                padding: 1rem 1rem 2rem !important;
+            }
+            #filtersSidebar .filter-dropdown {
+                display: block !important;
+                margin-bottom: 0.3rem;
+            }
+            #filtersSidebar .filter-btn {
+                width: 100% !important;
+                padding: 0.9rem 1rem !important;
+                font-size: 1rem !important;
+                font-weight: 600 !important;
+                border-radius: 10px !important;
+                text-align: left;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            #filtersSidebar .filter-menu {
+                position: static !important;
+                margin-top: 0.3rem !important;
+                border-radius: 10px !important;
+                max-height: none !important;
+            }
+            #filtersSidebar .filter-option {
+                padding: 0.7rem 1rem !important;
+                font-size: 0.95rem !important;
+            }
+            #filtersSidebar .filter-option input[type="checkbox"] {
+                width: 20px !important;
+                height: 20px !important;
+            }
+            #filtersSidebar .filter-option label {
+                font-size: 0.95rem !important;
             }
 
             /* --- ОРЕНДА ДЕТАЛІ --- */
@@ -1719,7 +1814,7 @@
 
             .container {
                 padding: 0.4rem 0.2rem;
-                padding-top: calc(0.4rem + 105px);
+                padding-top: calc(0.4rem + 115px);
             }
 
             .section-title { font-size: 0.95rem; }
@@ -1771,6 +1866,22 @@
         body.dark-mode .mobile-avatar-role { color: var(--text-secondary); }
         body.dark-mode .mobile-avatar-logout:hover {
             background: #3a2020;
+        }
+        body.dark-mode .mobile-card-id {
+            background: #2a3f5f;
+            color: #8ab4f8;
+        }
+        body.dark-mode .mobile-card-source {
+            color: var(--text-secondary);
+        }
+        body.dark-mode .mobile-detail-item {
+            background: var(--bg-tertiary);
+        }
+        body.dark-mode .mobile-detail-value {
+            color: var(--text-primary);
+        }
+        body.dark-mode .mobile-detail-label {
+            color: var(--text-secondary);
         }
 
         /* ===== DARK MODE ===== */
@@ -7372,33 +7483,46 @@
                 daysClass = daysNum < 0 ? 'overdue' : 'on-time';
             }
 
+            // Отримуємо джерело з leadsCache
+            var source = '';
+            if (typeof leadsCache !== 'undefined' && leadsCache[parseInt(leadIndex)]) {
+                source = leadsCache[parseInt(leadIndex)].source || '';
+            }
+
             html += '<div class="' + cardClasses + '" data-lead-id="' + leadId +
                 '" data-lead-index="' + leadIndex + '" data-is-rent="' + (isRent ? '1' : '0') + '">';
-            html += '<span class="mobile-card-id">#' + id + '</span>';
 
-            // Ряд 1: Ім'я + Телефон
+            // ID — видний, копіюється при натисканні
+            html += '<span class="mobile-card-id" onclick="event.stopPropagation(); navigator.clipboard.writeText(\'' + escapeHtml(id) + '\'); this.textContent=\'Скопійовано!\'; var el=this; setTimeout(function(){el.textContent=\'#' + escapeHtml(id) + '\';},1200);">#' + escapeHtml(id) + '</span>';
+
+            // Ряд 1: Ім'я + Джерело
             html += '<div class="mobile-card-row">';
             html += '<span class="mobile-card-name">' + escapeHtml(name) + '</span>';
-            if (phone) html += '<span class="mobile-card-phone">' + escapeHtml(phone) + '</span>';
+            if (source) html += '<span class="mobile-card-source">' + escapeHtml(source) + '</span>';
             html += '</div>';
 
-            // Ряд 2: Тип · Менеджер · Етап
-            html += '<div class="mobile-card-row"><span class="mobile-card-meta">';
+            // Ряд 2: Телефон + Етап
+            html += '<div class="mobile-card-row">';
+            if (phone) html += '<span class="mobile-card-phone">' + escapeHtml(phone) + '</span>';
+            html += '<span class="mobile-card-meta">';
             if (type) html += '<span>' + escapeHtml(type) + '</span>';
             if (manager) html += '<span>' + escapeHtml(manager) + '</span>';
             html += '</span>';
-            if (stage) html += '<span class="mobile-card-stage">' + escapeHtml(stage) + '</span>';
             html += '</div>';
 
-            // Ряд 3: Бюджет + Днів
+            // Ряд 3: Бюджет + Етап + Днів
             html += '<div class="mobile-card-row mobile-card-bottom">';
             html += '<span class="mobile-card-budget">' + (budget ? escapeHtml(budget) : '') +
                 (district ? ' · ' + escapeHtml(district) : '') + '</span>';
+            if (stage) html += '<span class="mobile-card-stage">' + escapeHtml(stage) + '</span>';
             if (daysLeft) {
                 html += '<span class="mobile-card-days ' + daysClass + '">' +
                     escapeHtml(daysLeft) + ' дн.</span>';
             }
             html += '</div>';
+
+            // Блок деталей (прихований, розгортається по кліку)
+            html += '<div class="mobile-card-details" style="display:none;"></div>';
 
             html += '</div>';
         }
@@ -7412,26 +7536,88 @@
         return div.innerHTML;
     }
 
-    // Обробник кліків на карточки — відкриваємо сайдбар редагування
+    // Обробник кліків на карточки — розгортка деталей (як на ПК)
     if (cardsContainer) {
         cardsContainer.addEventListener('click', function(e) {
+            // Не реагуємо на клік по ID (він копіює)
+            if (e.target.classList.contains('mobile-card-id')) return;
+            // Не реагуємо на кнопки редагування/видалення
+            if (e.target.closest('.mobile-card-actions-btn')) return;
+
             var card = e.target.closest('.mobile-lead-card');
             if (!card) return;
 
             var leadIndex = parseInt(card.getAttribute('data-lead-index'));
-            var isRent = card.getAttribute('data-is-rent') === '1';
+            var detailsDiv = card.querySelector('.mobile-card-details');
+            if (!detailsDiv) return;
 
-            // Використовуємо leadsCache з основного скрипту
+            // Toggle деталей
+            if (detailsDiv.style.display !== 'none') {
+                detailsDiv.style.display = 'none';
+                card.classList.remove('card-expanded');
+                return;
+            }
+
+            // Закриваю інші відкриті деталі
+            cardsContainer.querySelectorAll('.mobile-card-details').forEach(function(d) {
+                d.style.display = 'none';
+            });
+            cardsContainer.querySelectorAll('.mobile-lead-card').forEach(function(c) {
+                c.classList.remove('card-expanded');
+            });
+
+            // Генерую деталі з leadsCache
             if (typeof leadsCache !== 'undefined' && leadsCache[leadIndex]) {
                 var lead = leadsCache[leadIndex];
-                try {
-                    if (isRent && typeof openEditSidebarRent === 'function') {
-                        openEditSidebarRent(lead);
-                    } else if (typeof openEditSidebarDirect === 'function') {
-                        openEditSidebarDirect(lead);
-                    }
-                } catch (err) {
-                    console.error('Mobile card click error:', err);
+                var isRent = card.getAttribute('data-is-rent') === '1';
+
+                var detHtml = '<div class="mobile-details-grid">';
+                detHtml += '<div class="mobile-detail-item"><span class="mobile-detail-label">Джерело</span><span class="mobile-detail-value">' + escapeHtml(lead.source || '—') + '</span></div>';
+                detHtml += '<div class="mobile-detail-item"><span class="mobile-detail-label">Мова</span><span class="mobile-detail-value">' + escapeHtml(lead.language || '—') + '</span></div>';
+                detHtml += '<div class="mobile-detail-item"><span class="mobile-detail-label">Бюджет</span><span class="mobile-detail-value">' + escapeHtml(lead.budget || '—') + '</span></div>';
+                detHtml += '<div class="mobile-detail-item"><span class="mobile-detail-label">Район</span><span class="mobile-detail-value">' + escapeHtml(lead.district || '—') + '</span></div>';
+                detHtml += '<div class="mobile-detail-item"><span class="mobile-detail-label">Мета/Тип</span><span class="mobile-detail-value">' + escapeHtml(lead.metaType || '—') + '</span></div>';
+                detHtml += '<div class="mobile-detail-item"><span class="mobile-detail-label">Площа</span><span class="mobile-detail-value">' + escapeHtml(lead.area || '—') + '</span></div>';
+                detHtml += '<div class="mobile-detail-item"><span class="mobile-detail-label">Кімнати</span><span class="mobile-detail-value">' + escapeHtml(lead.rooms || '—') + '</span></div>';
+                detHtml += '<div class="mobile-detail-item"><span class="mobile-detail-label">Наступна дія</span><span class="mobile-detail-value">' + escapeHtml(lead.nextAction || '—') + '</span></div>';
+
+                if (isRent) {
+                    detHtml += '<div class="mobile-detail-item"><span class="mobile-detail-label">Заїзд</span><span class="mobile-detail-value">' + escapeHtml(lead.checkIn || '—') + '</span></div>';
+                    detHtml += '<div class="mobile-detail-item"><span class="mobile-detail-label">Виїзд</span><span class="mobile-detail-value">' + escapeHtml(lead.checkOut || '—') + '</span></div>';
+                    detHtml += '<div class="mobile-detail-item"><span class="mobile-detail-label">Гостей</span><span class="mobile-detail-value">' + escapeHtml(lead.guests || '—') + '</span></div>';
+                }
+
+                detHtml += '<div class="mobile-detail-item mobile-detail-comment"><span class="mobile-detail-label">Коментар</span><span class="mobile-detail-value">' + escapeHtml(lead.comment || '—') + '</span></div>';
+                detHtml += '</div>';
+
+                // Кнопки дій
+                detHtml += '<div class="mobile-card-actions">';
+                detHtml += '<button class="mobile-card-actions-btn mobile-card-edit-btn" data-lead-index="' + leadIndex + '" data-is-rent="' + (isRent ? '1' : '0') + '">✏️ Редагувати</button>';
+                detHtml += '</div>';
+
+                detailsDiv.innerHTML = detHtml;
+                detailsDiv.style.display = 'block';
+                card.classList.add('card-expanded');
+
+                // Кнопка редагування в деталях
+                var editBtn = detailsDiv.querySelector('.mobile-card-edit-btn');
+                if (editBtn) {
+                    editBtn.addEventListener('click', function(ev) {
+                        ev.stopPropagation();
+                        var idx = parseInt(this.getAttribute('data-lead-index'));
+                        var rent = this.getAttribute('data-is-rent') === '1';
+                        if (typeof leadsCache !== 'undefined' && leadsCache[idx]) {
+                            try {
+                                if (rent && typeof openEditSidebarRent === 'function') {
+                                    openEditSidebarRent(leadsCache[idx]);
+                                } else if (typeof openEditSidebarDirect === 'function') {
+                                    openEditSidebarDirect(leadsCache[idx]);
+                                }
+                            } catch (err) {
+                                console.error('Edit btn error:', err);
+                            }
+                        }
+                    });
                 }
             }
         });
