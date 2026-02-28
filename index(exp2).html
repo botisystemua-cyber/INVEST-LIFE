@@ -1307,6 +1307,24 @@
             color: #555;
             font-family: monospace;
         }
+        .mobile-card-manager {
+            font-size: 0.7rem;
+            color: #1F4E78;
+            font-weight: 600;
+            background: #e8f0fe;
+            padding: 1px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 45%;
+            text-align: right;
+        }
+        .mobile-card-manager-none {
+            color: #e74c3c !important;
+            background: #fde8e8 !important;
+            font-weight: 700;
+        }
         .mobile-card-meta {
             font-size: 0.78rem;
             color: #666;
@@ -1534,6 +1552,9 @@
             .rent-pill .dropdown-arrow {
                 display: none;
             }
+            .rent-dropdown {
+                display: flex !important;
+            }
 
             /* Оренда dropdown: фіксований, справа */
             .rent-dropdown-menu {
@@ -1735,6 +1756,17 @@
             }
 
             .filter-tags { flex-wrap: wrap; }
+
+            /* --- ЛОГІН ФОРМА НА МОБІЛЦІ --- */
+            #loginScreen {
+                padding: 15px !important;
+                padding-top: 3vh !important;
+            }
+            #loginScreen form input,
+            #loginScreen form button {
+                position: relative;
+                z-index: 5;
+            }
         }
 
         /* ===== PHONE: max-width 576px ===== */
@@ -1890,6 +1922,8 @@
         body.dark-mode .mobile-card-name { color: var(--text-primary); }
         body.dark-mode .mobile-card-meta { color: var(--text-secondary); }
         body.dark-mode .mobile-card-phone { color: var(--text-secondary); }
+        body.dark-mode .mobile-card-manager { background: #2a3f5f; color: #8ab4f8; }
+        body.dark-mode .mobile-card-manager-none { background: #4a2020 !important; color: #ff6b6b !important; }
         body.dark-mode .mobile-card-stage {
             background: var(--bg-tertiary);
             color: var(--text-primary);
@@ -2361,9 +2395,7 @@
         
         <!-- ОРЕНДА (dropdown) -->
         <div class="rent-dropdown" id="rentDropdown">
-            <button class="type-pill rent-pill" onclick="toggleRentDropdown()" id="pill-Оренда">
-                🏨 Оренда <span class="dropdown-arrow">▼</span>
-            </button>
+            <button class="type-pill rent-pill" onclick="toggleRentDropdown()" id="pill-Оренда">🏨 Оренда<span class="dropdown-arrow"> ▼</span></button>
             <div class="rent-dropdown-menu" id="rentDropdownMenu">
                 <button class="rent-option" onclick="selectDashboardType('Подобова')">🌙 Подобова</button>
                 <button class="rent-option" onclick="selectDashboardType('Сезонна')">☀️ Сезонна</button>
@@ -2392,10 +2424,10 @@
     <section id="managerSection">
         <div class="dashboard-header">
             <h1 class="section-title" id="dashboardTitle">📊 Дашборд</h1>
-            <button class="toggle-btn" id="toggleDashboard" onclick="toggleDashboard()" title="Згорнути/Розгорнути">−</button>
+            <button class="toggle-btn" id="toggleDashboard" onclick="toggleDashboard()" title="Згорнути/Розгорнути">+</button>
         </div>
         
-        <div class="dashboard-content" id="dashboardContent">
+        <div class="dashboard-content collapsed" id="dashboardContent">
             <div class="dashboard-summary" id="dashboardSummary">
                 <span>
                     <span style="opacity: 0.9; font-size: 0.9rem; text-transform: uppercase;">Всього лідів</span>
@@ -2418,9 +2450,9 @@
     <section id="managersSection">
         <div class="dashboard-header">
             <h2 class="section-title" id="managersTitle">👥 Менеджери</h2>
-            <button class="toggle-btn" id="toggleManagers" onclick="toggleManagers()" title="Згорнути/Розгорнути">−</button>
+            <button class="toggle-btn" id="toggleManagers" onclick="toggleManagers()" title="Згорнути/Розгорнути">+</button>
         </div>
-        <div id="managersContent">
+        <div id="managersContent" style="display: none;">
             <div id="managerFiltersContainer" style="
                 background: #f5f5f5;
                 padding: 1rem;
@@ -5512,13 +5544,27 @@
       menu.style.display = 'none';
     }
     
-    // Показую дашборд контент
-    const content = document.getElementById('dashboardContent');
-    if (content && content.classList.contains('collapsed')) {
-      content.classList.remove('collapsed');
-      document.getElementById('toggleDashboard').textContent = '−';
+    // На мобілці — згортаємо дашборд і менеджерів при зміні типу
+    if (window.innerWidth <= 768) {
+      const content = document.getElementById('dashboardContent');
+      if (content && !content.classList.contains('collapsed')) {
+        content.classList.add('collapsed');
+        document.getElementById('toggleDashboard').textContent = '+';
+      }
+      const mgContent = document.getElementById('managersContent');
+      if (mgContent) {
+        mgContent.style.display = 'none';
+        document.getElementById('toggleManagers').textContent = '+';
+      }
+    } else {
+      // На десктопі — розгортаємо дашборд (як було)
+      const content = document.getElementById('dashboardContent');
+      if (content && content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        document.getElementById('toggleDashboard').textContent = '−';
+      }
     }
-    
+
     // Завантажу нові дані
     loadStats();
     loadLeads();
@@ -7580,19 +7626,21 @@
             if (source) html += '<span class="mobile-card-source">' + escapeHtml(source) + '</span>';
             html += '</div>';
 
-            // Ряд 1: Ім'я
+            // Ряд 1: Ім'я + Етап
             html += '<div class="mobile-card-row">';
             html += '<span class="mobile-card-name">' + escapeHtml(name) + '</span>';
             if (stage) html += '<span class="mobile-card-stage">' + escapeHtml(stage) + '</span>';
             html += '</div>';
 
-            // Ряд 2: Телефон + Тип · Менеджер
+            // Ряд 2: Телефон + Менеджер (виразно)
             html += '<div class="mobile-card-row">';
             if (phone) html += '<span class="mobile-card-phone">' + escapeHtml(phone) + '</span>';
-            html += '<span class="mobile-card-meta">';
-            if (type) html += '<span>' + escapeHtml(type) + '</span>';
-            if (manager) html += '<span>' + escapeHtml(manager) + '</span>';
-            html += '</span>';
+            var isUnassigned = !manager || manager === '❌ Не назначено' || manager.indexOf('Не назначено') !== -1;
+            if (isUnassigned) {
+                html += '<span class="mobile-card-manager mobile-card-manager-none">не призн.</span>';
+            } else if (manager) {
+                html += '<span class="mobile-card-manager">' + escapeHtml(manager) + '</span>';
+            }
             html += '</div>';
 
             // Ряд 3: Бюджет · Район + Днів
