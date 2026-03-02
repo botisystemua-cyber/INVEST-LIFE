@@ -2806,6 +2806,56 @@
   // Для сумісності зі старим кодом
   const SCRIPT_URL = SCRIPT_URL_REALTY;
 
+  // ✅ УТИЛІТА: Конвертація дати в формат yyyy-MM-dd для <input type="date">
+  // Використовує ЛОКАЛЬНУ таймзону браузера (щоб не зсувалась дата через UTC)
+  function dateToInputValue(dateStr) {
+    if (!dateStr) return '';
+    try {
+      if (typeof dateStr === 'string' && dateStr.includes('T')) {
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+      if (typeof dateStr === 'string' && dateStr.includes('.')) {
+        const parts = dateStr.split('.');
+        if (parts.length === 3) {
+          return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      }
+      return dateStr;
+    } catch (e) {
+      console.error('dateToInputValue error:', e);
+      return '';
+    }
+  }
+
+  // ✅ УТИЛІТА: Форматування дати для відображення (dd.MM.yyyy)
+  // Використовує ЛОКАЛЬНУ таймзону браузера
+  function formatDateSafe(dateStr) {
+    if (!dateStr) return '—';
+    try {
+      if (typeof dateStr === 'string' && dateStr.includes('T')) {
+        const date = new Date(dateStr);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
+      }
+      if (typeof dateStr === 'string' && dateStr.includes('.')) {
+        return dateStr.split(' ')[0];
+      }
+      if (typeof dateStr === 'string' && dateStr.includes('-') && dateStr.length === 10) {
+        const parts = dateStr.split('-');
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+      }
+      return dateStr;
+    } catch (e) {
+      return dateStr || '—';
+    }
+  }
+
   let currentUser = null;
   let allLeads = [];
   let managers = [];
@@ -4021,24 +4071,8 @@
     document.getElementById('sidebarManager').value = lead.manager || 'Не назначено';
     document.getElementById('sidebarStage').value = lead.stage || 'Етап_1_Контакт';
     
-    // ✅ КОНВЕРТУЮ ДАТУ З ISO ФОРМАТУ В yyyy-MM-dd
-    let dateValue = '';
-    if (lead.nextContact) {
-      try {
-        // Якщо дата в ISO форматі (2026-01-28T22:00:00.000Z)
-        if (lead.nextContact.includes('T')) {
-          const date = new Date(lead.nextContact);
-          dateValue = date.toISOString().split('T')[0]; // Беру тільки yyyy-MM-dd
-        } else {
-          // Якщо уже в правильному форматі
-          dateValue = lead.nextContact;
-        }
-      } catch (e) {
-        console.error('❌ Помилка при конвертації дати:', e);
-        dateValue = '';
-      }
-    }
-    document.getElementById('sidebarNextContact').value = dateValue;
+    // ✅ КОНВЕРТУЮ ДАТУ В yyyy-MM-dd (локальна таймзона, без UTC-зсуву)
+    document.getElementById('sidebarNextContact').value = dateToInputValue(lead.nextContact);
     
     // ⭐ ЗАПОВНЮЮ СТАТУС З ДАНИХ ЛІДІВ (формула из таблицы)
     document.getElementById('sidebarStatus').value = lead.status || '';
@@ -4487,29 +4521,7 @@
     
     // ⭐ ФУНКЦІЯ ФОРМАТУВАННЯ ДАТИ (прибирає час і код)
     function formatDate(dateStr) {
-      if (!dateStr) return '—';
-      try {
-        // Якщо ISO формат (2026-02-03T22:00:00.000Z)
-        if (dateStr.includes('T')) {
-          const date = new Date(dateStr);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          return `${day}.${month}.${year}`;
-        }
-        // Якщо вже у форматі dd.mm.yyyy
-        if (dateStr.includes('.')) {
-          return dateStr.split(' ')[0]; // Беру тільки дату без часу
-        }
-        // Якщо yyyy-mm-dd
-        if (dateStr.includes('-') && dateStr.length === 10) {
-          const parts = dateStr.split('-');
-          return `${parts[2]}.${parts[1]}.${parts[0]}`;
-        }
-        return dateStr;
-      } catch (e) {
-        return dateStr || '—';
-      }
+      return formatDateSafe(dateStr);
     }
 
     if (!leads || leads.length === 0) {
@@ -4753,26 +4765,7 @@
     };
     
     function formatDate(dateStr) {
-      if (!dateStr) return '—';
-      try {
-        if (dateStr.includes('T')) {
-          const date = new Date(dateStr);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          return `${day}.${month}.${year}`;
-        }
-        if (dateStr.includes('.')) {
-          return dateStr.split(' ')[0];
-        }
-        if (dateStr.includes('-') && dateStr.length === 10) {
-          const parts = dateStr.split('-');
-          return `${parts[2]}.${parts[1]}.${parts[0]}`;
-        }
-        return dateStr;
-      } catch (e) {
-        return dateStr || '—';
-      }
+      return formatDateSafe(dateStr);
     }
 
     if (!leads || leads.length === 0) {
@@ -4999,23 +4992,8 @@
     document.getElementById('rentComment').value = lead.comment || '';
     document.getElementById('rentContactTime').value = lead.contactTime || '';
     
-    // Дата контакту
-    if (lead.nextContact) {
-      try {
-        let dateValue = lead.nextContact;
-        if (dateValue.includes('T')) {
-          dateValue = dateValue.split('T')[0];
-        } else if (dateValue.includes('.')) {
-          const parts = dateValue.split('.');
-          if (parts.length === 3) {
-            dateValue = parts[2] + '-' + parts[1] + '-' + parts[0];
-          }
-        }
-        document.getElementById('rentNextContact').value = dateValue;
-      } catch (e) {
-        console.error('Помилка парсингу дати:', e);
-      }
-    }
+    // ✅ Дата контакту (локальна таймзона, без UTC-зсуву)
+    document.getElementById('rentNextContact').value = dateToInputValue(lead.nextContact);
     
     // Завантажую менеджерів для оренди
     loadRentManagers(lead.manager);
@@ -5263,7 +5241,7 @@
     document.getElementById('editLeadId').value = lead.id;
     document.getElementById('editPhone').value = lead.phone;
     document.getElementById('editStage').value = lead.stage;
-    document.getElementById('editContactDate').value = lead.nextContact || '';
+    document.getElementById('editContactDate').value = dateToInputValue(lead.nextContact);
     document.getElementById('editNextAction').value = lead.nextAction || '';
     document.getElementById('editComment').value = lead.comment || '';
     document.getElementById('editModal').classList.add('active');
