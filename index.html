@@ -218,16 +218,8 @@
         <!-- КОНСУЛЬТАЦІЯ -->
         <button class="type-pill" onclick="selectDashboardType('Консультація')" id="pill-Консультація">💬 Консультація</button>
         
-        <!-- ОРЕНДА (dropdown) -->
-        <div class="rent-dropdown" id="rentDropdown">
-            <button class="type-pill rent-pill" onclick="toggleRentDropdown()" id="pill-Оренда">🏨 Оренда<span class="dropdown-arrow"> ▼</span></button>
-            <div class="rent-dropdown-menu" id="rentDropdownMenu">
-                <button class="rent-option" onclick="selectDashboardType('Подобова')">🌙 Подобова</button>
-                <button class="rent-option" onclick="selectDashboardType('Сезонна')">☀️ Сезонна</button>
-                <button class="rent-option" onclick="selectDashboardType('Довгострокова')">📅 Довгострокова</button>
-                <button class="rent-option" onclick="selectDashboardType('Управління')">🔑 Управління</button>
-            </div>
-        </div>
+        <!-- ОРЕНДА (проста кнопка) -->
+        <button class="type-pill" onclick="selectDashboardType('Оренда')" id="pill-Оренда">🏨 Оренда</button>
     </div>
 
     <!-- Dark mode toggle -->
@@ -271,34 +263,34 @@
 
     </section>
 
-    <!-- ===== МЕНЕДЖЕРИ (окрема розгортка) ===== -->
-    <section id="managersSection">
-        <div class="dashboard-header">
-            <h2 class="section-title" id="managersTitle">👥 Менеджери</h2>
-            <button class="toggle-btn" id="toggleManagers" onclick="toggleManagers()" title="Згорнути/Розгорнути">+</button>
-        </div>
-        <div id="managersContent" style="display: none;">
-            <div id="managerFiltersContainer" style="
-                background: #f5f5f5;
-                padding: 1rem;
-                border-radius: 8px;
-                margin: 0.5rem 0 1rem 0;
-                display: flex;
-                gap: 1rem;
-                flex-wrap: wrap;
-                align-items: center;
-                border-left: 4px solid #4472C4;
-            ">
-                <span style="font-weight: bold; color: #1F4E78; font-size: 0.9rem;">👥 Менеджери:</span>
-                <div id="managerCheckboxes" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <div style="color: #999;">⏳ Завантажаю...</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- ===== РОЗДІЛЬНИК ===== -->
     <hr style="border: none; border-top: 3px solid var(--primary); margin: 1.2rem 0; opacity: 0.25;">
+
+    <!-- ===== КНОПКИ ТИПУ ОРЕНДИ (показуються тільки коли обрано Оренда) ===== -->
+    <div id="rentTypeButtons" style="display: none;">
+        <div class="rent-type-grid">
+            <button class="rent-type-btn active" onclick="selectRentSubtype('Всі')" id="rentBtn-Всі">
+                <span class="rent-type-icon">📋</span>
+                <span class="rent-type-label">Всі</span>
+            </button>
+            <button class="rent-type-btn" onclick="selectRentSubtype('Подобова')" id="rentBtn-Подобова">
+                <span class="rent-type-icon">🌙</span>
+                <span class="rent-type-label">Подобова</span>
+            </button>
+            <button class="rent-type-btn" onclick="selectRentSubtype('Сезонна')" id="rentBtn-Сезонна">
+                <span class="rent-type-icon">☀️</span>
+                <span class="rent-type-label">Сезонна</span>
+            </button>
+            <button class="rent-type-btn" onclick="selectRentSubtype('Довгострокова')" id="rentBtn-Довгострокова">
+                <span class="rent-type-icon">📅</span>
+                <span class="rent-type-label">Довгострокова</span>
+            </button>
+            <button class="rent-type-btn" onclick="selectRentSubtype('Управління')" id="rentBtn-Управління">
+                <span class="rent-type-icon">🔑</span>
+                <span class="rent-type-label">Управління</span>
+            </button>
+        </div>
+    </div>
 
     <!-- ===== АДМІН ПАНЕЛЬ ===== -->
 

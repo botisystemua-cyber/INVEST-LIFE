@@ -11,9 +11,12 @@
   // ⭐ Типи оренди
   const RENT_TYPES = ['Подобова', 'Сезонна', 'Довгострокова', 'Управління'];
   
+  // ⭐ Поточний підтип оренди (Всі, Подобова, Сезонна, Довгострокова, Управління)
+  let currentRentSubtype = 'Всі';
+
   // ⭐ Функція для отримання правильного API URL в залежності від типу
   function getScriptUrl() {
-    if (RENT_TYPES.includes(currentDashboardType)) {
+    if (RENT_TYPES.includes(currentDashboardType) || currentDashboardType === 'Оренда') {
       console.log('🏨 Використовую API Оренда');
       return SCRIPT_URL_RENT;
     } else {
@@ -434,11 +437,7 @@
           document.getElementById('userRole').textContent = result.role;
         }
 
-        // Ховаємо секцію Менеджери для не-Admin
-        const managersSection = document.getElementById('managersSection');
-        if (managersSection) {
-          managersSection.style.display = result.role === 'Admin' ? 'block' : 'none';
-        }
+        // (Секція Менеджери видалена)
 
         showLoginAlert('✅ Успішно! Завантажаю...', 'success');
 
@@ -504,20 +503,11 @@
         document.getElementById('leadsTitle').textContent = '📋 Всі ліди';
       }
       
-      // Якщо менеджер - скрити поле вибору менеджера + секцію Менеджери
+      // Якщо менеджер - скрити поле вибору менеджера
       if (role === 'Manager') {
         const managerGroup = document.getElementById('managerGroup');
         if (managerGroup) {
           managerGroup.style.display = 'none';
-        }
-        const managersSection = document.getElementById('managersSection');
-        if (managersSection) {
-          managersSection.style.display = 'none';
-        }
-      } else {
-        const managersSection = document.getElementById('managersSection');
-        if (managersSection) {
-          managersSection.style.display = 'block';
         }
       }
 
@@ -566,11 +556,7 @@
           dashboardContent.classList.add('collapsed');
           toggleBtn.textContent = '+';
           document.body.classList.add('dashboard-collapsed');
-          // Менеджери теж згорнуті
-          const mgContent = document.getElementById('managersContent');
-          const mgBtn = document.getElementById('toggleManagers');
-          if (mgContent) mgContent.style.display = 'none';
-          if (mgBtn) mgBtn.textContent = '+';
+          // (Секція Менеджери видалена)
         } else if (dashboardCollapsed) {
           if (!document.body.classList.contains('dashboard-collapsed')) {
             toggleDashboard();
@@ -586,13 +572,18 @@
     
     console.log('Завантажаю ліди для:', manager, 'Роль:', role, 'Тип:', currentDashboardType);
     
-    const isRent = RENT_TYPES.includes(currentDashboardType);
+    const isRent = RENT_TYPES.includes(currentDashboardType) || currentDashboardType === 'Оренда';
     const cache = isRent ? cachedRentLeads : cachedRealtyLeads;
-    
+
     // ⭐ Якщо є кеш — фільтруємо локально (миттєво)
     if (cache) {
       console.log('⚡ Використовую кеш! Всього в кеші:', cache.length);
-      allLeads = cache.filter(lead => lead.type === currentDashboardType && lead.deletedStatus !== 'ВИДАЛЕНО');
+      if (currentDashboardType === 'Оренда') {
+        // Режим "Всі" — показуємо всіх лідів оренди (крім видалених)
+        allLeads = cache.filter(lead => lead.deletedStatus !== 'ВИДАЛЕНО');
+      } else {
+        allLeads = cache.filter(lead => lead.type === currentDashboardType && lead.deletedStatus !== 'ВИДАЛЕНО');
+      }
       console.log('Після фільтрації:', allLeads.length, 'типу:', currentDashboardType);
       renderLeads(allLeads);
       populateFilters();
@@ -635,7 +626,12 @@
         }
         
         // Фільтрую по поточному типу
-        allLeads = allFetched.filter(lead => lead.type === currentDashboardType && lead.deletedStatus !== 'ВИДАЛЕНО');
+        if (currentDashboardType === 'Оренда') {
+          // Режим "Всі" — показуємо всіх лідів оренди (крім видалених)
+          allLeads = allFetched.filter(lead => lead.deletedStatus !== 'ВИДАЛЕНО');
+        } else {
+          allLeads = allFetched.filter(lead => lead.type === currentDashboardType && lead.deletedStatus !== 'ВИДАЛЕНО');
+        }
         console.log('Після фільтрації:', allLeads.length, 'типу:', currentDashboardType);
         renderLeads(allLeads);
         populateFilters();
@@ -653,14 +649,26 @@
   function loadStats() {
     const userName = localStorage.getItem('user_name');
     const userRole = localStorage.getItem('user_role');
-    
+
+    // Для режиму "Всі" оренди — дашборд не завантажуємо (немає конкретного типу)
+    if (currentDashboardType === 'Оренда') {
+      const grid = document.getElementById('dashboardGrid');
+      if (grid) grid.innerHTML = '<div style="text-align:center; color:#888; padding:1rem;">Оберіть конкретний тип оренди для перегляду статистики</div>';
+      const summary = document.getElementById('dashboardSummary');
+      if (summary) {
+        document.getElementById('totalLeads').textContent = '-';
+        document.getElementById('totalBudget').textContent = '-';
+      }
+      return;
+    }
+
     console.log('loadStats: role=' + userRole + ', name=' + userName + ', type=' + currentDashboardType);
-    
+
     fetch(getScriptUrl(), {
       method: 'POST',
       body: JSON.stringify({
         action: 'getStats',
-        payload: { 
+        payload: {
           userRole: userRole,
           userName: userName,
           type: currentDashboardType
@@ -1388,7 +1396,7 @@
   
   function openAddLeadSidebar() {
     // ⭐ Якщо це тип Оренди — відкриваю сайдбар оренди
-    if (RENT_TYPES.includes(currentDashboardType)) {
+    if (RENT_TYPES.includes(currentDashboardType) || currentDashboardType === 'Оренда') {
       openAddRentLeadSidebar();
       return;
     }
@@ -1407,9 +1415,10 @@
   // ⭐ ФУНКЦІЇ ДЛЯ САЙДБАРУ ДОДАВАННЯ ОРЕНДИ
   function openAddRentLeadSidebar() {
     const sidebar = document.getElementById('addRentLeadSidebar');
-    
-    // Встановлюю поточний тип оренди
-    document.getElementById('addRentType').value = currentDashboardType;
+
+    // Встановлюю поточний тип оренди (якщо "Всі" — ставлю Подобова за замовчуванням)
+    const rentTypeSelect = document.getElementById('addRentType');
+    rentTypeSelect.value = (currentDashboardType === 'Оренда') ? 'Подобова' : currentDashboardType;
     
     // Завантажую менеджерів
     loadRentManagersForAdd();
@@ -1573,8 +1582,8 @@
     .then(result => {
       if (result.success) {
         // Скидаю кеш
-        if (RENT_TYPES.includes(currentDashboardType)) { cachedRentLeads = null; } else { cachedRealtyLeads = null; }
-        
+        if (RENT_TYPES.includes(currentDashboardType) || currentDashboardType === 'Оренда') { cachedRentLeads = null; } else { cachedRealtyLeads = null; }
+
         loadLeadsWithCallback(() => {
           showSuccess('✅ Ліда видалено!');
         });
@@ -1665,16 +1674,23 @@
     const role = localStorage.getItem('user_role');
     const name = localStorage.getItem('user_name');
     const type = currentDashboardType;
-    
+
     // ⭐ Скидаю кеш — дані змінилися
-    if (RENT_TYPES.includes(type)) {
+    if (RENT_TYPES.includes(type) || type === 'Оренда') {
       cachedRentLeads = null;
     } else {
       cachedRealtyLeads = null;
     }
-    
+
+    // Для режиму "Всі" оренди — використовую loadLeads (який робить getAllLeadsNoFilter)
+    if (type === 'Оренда') {
+      loadLeads();
+      if (callback) callback();
+      return;
+    }
+
     console.log('Завантажую ліди для:', name, 'Роль:', role, 'Тип:', type);
-    
+
     fetch(getScriptUrl(), {
       method: 'POST',
       body: JSON.stringify({
@@ -1702,7 +1718,7 @@
 
   function renderLeads(leads) {
     // ⭐ Якщо це тип Оренди — використовую окрему функцію
-    if (RENT_TYPES.includes(currentDashboardType)) {
+    if (RENT_TYPES.includes(currentDashboardType) || currentDashboardType === 'Оренда') {
       renderRentLeads(leads);
       return;
     }
@@ -2573,14 +2589,22 @@
     const type = currentDashboardType;
     
     // ⭐ Скидаю кеш — дані змінилися
-    if (RENT_TYPES.includes(type)) {
+    if (RENT_TYPES.includes(type) || type === 'Оренда') {
       cachedRentLeads = null;
     } else {
       cachedRealtyLeads = null;
     }
-    
+
+    // Для режиму "Всі" оренди — використовую loadLeads
+    if (type === 'Оренда') {
+      loadLeads();
+      loadStats();
+      if (callback) callback();
+      return;
+    }
+
     console.log('📊 loadDataWithCallback: role=' + role + ', name=' + name + ', type=' + type);
-    
+
     fetch(getScriptUrl(), {
       method: 'POST',
       body: JSON.stringify({
@@ -2653,7 +2677,7 @@
         alert('✅ Збережено!');
         closeModal('editModal');
         // ⭐ Скидаю кеш — дані змінилися
-        if (RENT_TYPES.includes(currentDashboardType)) { cachedRentLeads = null; } else { cachedRealtyLeads = null; }
+        if (RENT_TYPES.includes(currentDashboardType) || currentDashboardType === 'Оренда') { cachedRentLeads = null; } else { cachedRealtyLeads = null; }
         // Оновлюємо дашборд і таблицю
         loadStats(); // Оновляємо дашборд
         loadLeads(); // Оновляємо таблицю лідів
@@ -2715,64 +2739,59 @@
   
   function selectDashboardType(type) {
     console.log('selectDashboardType:', type);
-    
-    // Закриваю dropdown якщо відкритий
-    closeRentDropdown();
-    
+
     // Оновлюю активну кнопку
     document.querySelectorAll('.type-pill').forEach(btn => {
       btn.classList.remove('active');
     });
-    document.querySelectorAll('.rent-option').forEach(btn => {
-      btn.classList.remove('active');
-    });
-    
-    // Визначаю яку кнопку активувати
-    if (rentTypes.includes(type)) {
-      // Це тип оренди — активую кнопку "Оренда" і відповідну опцію
-      document.getElementById('pill-Оренда').classList.add('active');
-      const rentOption = document.querySelector(`.rent-option[onclick*="${type}"]`);
-      if (rentOption) rentOption.classList.add('active');
+
+    // Активую відповідну кнопку
+    const pill = document.getElementById('pill-' + type);
+    if (pill) pill.classList.add('active');
+
+    // Показую/ховаю великі кнопки оренди
+    const rentBtns = document.getElementById('rentTypeButtons');
+    if (type === 'Оренда') {
+      // Показую великі кнопки оренди
+      if (rentBtns) rentBtns.style.display = 'block';
+      // За замовчуванням — "Всі"
+      currentRentSubtype = 'Всі';
+      currentDashboardType = 'Оренда';
+      // Активую кнопку "Всі"
+      document.querySelectorAll('.rent-type-btn').forEach(b => b.classList.remove('active'));
+      const allBtn = document.getElementById('rentBtn-Всі');
+      if (allBtn) allBtn.classList.add('active');
     } else {
-      // Звичайний тип — активую відповідну кнопку
-      const pill = document.getElementById('pill-' + type);
-      if (pill) pill.classList.add('active');
+      // Ховаю великі кнопки оренди
+      if (rentBtns) rentBtns.style.display = 'none';
+      currentDashboardType = type;
     }
-    
-    // Встановлюю тип
-    currentDashboardType = type;
-    
+
     // Визначаю emoji
     let emoji = '🏢';
     if (type === 'Продаж') emoji = '🏠';
+    else if (type === 'Оренда') emoji = '🏨';
     else if (type === 'Подобова') emoji = '🌙';
     else if (type === 'Сезонна') emoji = '☀️';
     else if (type === 'Довгострокова') emoji = '📅';
     else if (type === 'Управління') emoji = '🔑';
     else if (type === 'Консультація') emoji = '💬';
-    
-    // Заголовок дашборду не змінюємо — завжди "Дашборд"
 
     // Оновлюю заголовок таблиці
     document.getElementById('leadsTitle').textContent = `📋 Ліди (${emoji} ${type})`;
-    
+
     // Приховую меню вибору типу якщо воно видно
     const menu = document.getElementById('dashboardTypeMenu');
     if (menu) {
       menu.style.display = 'none';
     }
-    
-    // На мобілці — згортаємо дашборд і менеджерів при зміні типу
+
+    // На мобілці — згортаємо дашборд при зміні типу
     if (window.innerWidth <= 768) {
       const content = document.getElementById('dashboardContent');
       if (content && !content.classList.contains('collapsed')) {
         content.classList.add('collapsed');
         document.getElementById('toggleDashboard').textContent = '+';
-      }
-      const mgContent = document.getElementById('managersContent');
-      if (mgContent) {
-        mgContent.style.display = 'none';
-        document.getElementById('toggleManagers').textContent = '+';
       }
     } else {
       // На десктопі — розгортаємо дашборд (як було)
@@ -2787,35 +2806,34 @@
     loadStats();
     loadLeads();
   }
-  
-  // ⭐ ФУНКЦІЇ ДЛЯ DROPDOWN ОРЕНДИ
-  function toggleRentDropdown() {
-    const dropdown = document.getElementById('rentDropdown');
-    dropdown.classList.toggle('open');
 
-    // На мобілці: позиціонуємо dropdown під кнопкою Оренда
-    if (dropdown.classList.contains('open') && window.innerWidth <= 768) {
-      const pill = document.getElementById('pill-Оренда');
-      const menu = document.getElementById('rentDropdownMenu');
-      if (pill && menu) {
-        const rect = pill.getBoundingClientRect();
-        menu.style.top = (rect.bottom + 6) + 'px';
-      }
+  // ⭐ ВИБІР ПІДТИПУ ОРЕНДИ (великі кнопки)
+  function selectRentSubtype(subtype) {
+    console.log('selectRentSubtype:', subtype);
+    currentRentSubtype = subtype;
+
+    // Оновлюю активну кнопку
+    document.querySelectorAll('.rent-type-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('rentBtn-' + subtype);
+    if (btn) btn.classList.add('active');
+
+    if (subtype === 'Всі') {
+      currentDashboardType = 'Оренда';
+      document.getElementById('leadsTitle').textContent = '📋 Ліди (🏨 Оренда — Всі)';
+    } else {
+      currentDashboardType = subtype;
+      let emoji = '🏨';
+      if (subtype === 'Подобова') emoji = '🌙';
+      else if (subtype === 'Сезонна') emoji = '☀️';
+      else if (subtype === 'Довгострокова') emoji = '📅';
+      else if (subtype === 'Управління') emoji = '🔑';
+      document.getElementById('leadsTitle').textContent = `📋 Ліди (${emoji} ${subtype})`;
     }
+
+    // Завантажу нові дані
+    loadStats();
+    loadLeads();
   }
-  
-  function closeRentDropdown() {
-    const dropdown = document.getElementById('rentDropdown');
-    if (dropdown) dropdown.classList.remove('open');
-  }
-  
-  // Закриваю dropdown при кліку поза ним
-  document.addEventListener('click', function(e) {
-    const dropdown = document.getElementById('rentDropdown');
-    if (dropdown && !dropdown.contains(e.target)) {
-      closeRentDropdown();
-    }
-  });
 
   function logout() {
     // ⭐ Видаляю тільки дані авторизації, НЕ viewedLeads
@@ -2880,7 +2898,7 @@
 
   function toggleColumnSettings() {
     // ⭐ Якщо це тип Оренди — показую модалку оренди
-    if (RENT_TYPES.includes(currentDashboardType)) {
+    if (RENT_TYPES.includes(currentDashboardType) || currentDashboardType === 'Оренда') {
       document.getElementById('columnSettingsRentModal').classList.add('active');
     } else {
       document.getElementById('columnSettingsModal').classList.add('active');
@@ -3053,7 +3071,7 @@
       { value: 'Етап_8_Виселення', label: 'Етап 8: Виселення' }
     ];
     
-    const stages = RENT_TYPES.includes(currentDashboardType) ? rentStages : realtyStages;
+    const stages = (RENT_TYPES.includes(currentDashboardType) || currentDashboardType === 'Оренда') ? rentStages : realtyStages;
     
     // Перезаповнюю меню етапів
     stageMenu.innerHTML = `
