@@ -1,0 +1,2174 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1F4E78;
+            --secondary: #4472C4;
+            --success: #70AD47;
+            --warning: #FFC000;
+            --danger: #FF0000;
+            --light: #F8F9FA;
+            --dark: #333;
+            
+            /* Light mode */
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F8F9FA;
+            --bg-tertiary: #EEEFF3;
+            --text-primary: #1A1A1A;
+            --text-secondary: #666666;
+            --border-color: #E0E0E0;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        body.dark-mode {
+            --bg-primary: #1A1A1A;
+            --bg-secondary: #242424;
+            --bg-tertiary: #2D2D2D;
+            --text-primary: #F5F5F5;
+            --text-secondary: #B0B0B0;
+            --border-color: #404040;
+            --shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* ⭐ СТИЛІ ДЛЯ ЛІДІВ БЕЗ МЕНЕДЖЕРА (червоний) */
+        .lead-unassigned {
+            background-color: #FFE0E0 !important;
+            border-left: 4px solid #FF0000 !important;
+        }
+        
+        .lead-unassigned td {
+            color: #CC0000;
+        }
+        
+        body.dark-mode .lead-unassigned {
+            background-color: #4A2020 !important;
+        }
+        
+        body.dark-mode .lead-unassigned td {
+            color: #FF6B6B;
+        }
+
+        /* ⭐ СТИЛІ ДЛЯ НОВИХ ЛІДІВ (акуратний сигнал) */
+        .lead-new {
+            background-color: #FFFDE7 !important;
+            border-left: 4px solid #FFD700 !important;
+            position: relative;
+        }
+        
+        .lead-new:hover {
+            background-color: #FFF9C4 !important;
+        }
+        
+        body.dark-mode .lead-new {
+            background-color: #3D3D00 !important;
+        }
+        
+        body.dark-mode .lead-new:hover {
+            background-color: #4A4A00 !important;
+        }
+        
+        /* ⭐ ІНДИКАТОР НОВОГО ЛІДА */
+        .new-lead-indicator {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            margin-left: 8px;
+            animation: pulse 1.5s ease-in-out infinite;
+            white-space: nowrap;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
+            50% { opacity: 0.8; box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); }
+        }
+
+        /* ⭐ БЕЙДЖИКИ НОВИХ ЛІДІВ НА ВКЛАДКАХ */
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #FF4444;
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 800;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 10px;
+            margin-left: 5px;
+            animation: badgePulse 2s ease-in-out infinite;
+            line-height: 1;
+            vertical-align: middle;
+        }
+        
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* ⭐ OVERLAY ЗАВАНТАЖЕННЯ */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .loading-spinner {
+            font-size: 4rem;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ⭐ КНОПКИ РЕДАГУВАННЯ / ВИДАЛЕННЯ ЛІДІВ */
+        .lead-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+        }
+        .btn-details-realty,
+        .btn-details {
+            background: #1F4E78 !important;
+            color: white !important;
+            border: none !important;
+            padding: 5px 12px !important;
+            border-radius: 4px !important;
+            cursor: pointer;
+            font-size: 0.7rem !important;
+            white-space: nowrap;
+            transition: background 0.2s ease;
+            flex-shrink: 0;
+        }
+        .btn-details-realty:hover,
+        .btn-details:hover {
+            background: #2a6a9e !important;
+        }
+        .btn-edit-lead,
+        .btn-delete-lead {
+            padding: 4px 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+            overflow: hidden;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+        .btn-edit-lead {
+            background: #f39c12;
+            margin-left: auto;
+        }
+        .btn-edit-lead:hover {
+            background: #f5b041;
+        }
+        .btn-delete-lead {
+            background: #e74c3c;
+        }
+        .btn-delete-lead:hover {
+            background: #ec7063;
+        }
+        
+        .loading-text {
+            color: white;
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .loading-success {
+            color: #4CAF50;
+            font-size: 4rem;
+            animation: successPop 0.5s ease-out;
+        }
+        
+        @keyframes successPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ⭐ РОЗГОРТАЄМІ РЯДКИ ДЛЯ ОРЕНДИ */
+        .rent-lead-row {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .rent-lead-row:hover {
+            background: #f5f9ff !important;
+        }
+        
+        .rent-details-row {
+            display: none;
+            background: #f8fafc;
+        }
+        
+        .rent-details-row.expanded {
+            display: table-row;
+        }
+        
+        .rent-details-content {
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        
+        .rent-detail-item {
+            display: flex;
+            flex-direction: column;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .rent-detail-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .rent-detail-value {
+            font-size: 0.9rem;
+            color: #1e293b;
+            font-weight: 600;
+        }
+        
+        .expand-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        
+        .expand-btn:hover {
+            background: #cbd5e1;
+        }
+        
+        .expand-btn.expanded {
+            background: #4472C4;
+            color: white;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* ===== УНІВЕРСАЛЬНІ СТИЛІ КНОПОК ===== */
+        button, input[type="button"], input[type="submit"] {
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+        }
+
+        button:focus {
+            outline: 2px solid var(--secondary);
+            outline-offset: 2px;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ===== НАВИГАЦІЯ ===== */
+        .navbar {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            width: 100%;
+            box-sizing: border-box;
+            padding-right: calc(2rem + 20px);
+        }
+
+        .navbar-brand {
+            font-size: 1.2rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #1e3a8a;
+            letter-spacing: 1px;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-role {
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* ===== КОНТЕЙНЕР ===== */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem 1rem 1rem;
+            padding-top: calc(1.5rem + 60px);
+        }
+
+        /* ===== ДАШБОРД ===== */
+        .dashboard-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-top: 1rem;
+        }
+
+        /* Новий мінімалістичний стиль для дашборду */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .toggle-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .dashboard-content {
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-content.collapsed {
+            display: none;
+        }
+
+        /* Меню вибору типу дашборду */
+        .dashboard-type-menu {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(31, 78, 120, 0.2);
+            text-align: center;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dashboard-type-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .dashboard-type-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .type-btn {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 1rem 2.5rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+
+        .type-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(31, 78, 120, 0.25);
+        }
+
+        .type-btn-active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(31, 78, 120, 0.25);
+        }
+
+        .dashboard-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #1F4E78 0%, #4472C4 100%);
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 2.5rem;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px rgba(31, 78, 120, 0.2);
+        }
+
+        .dashboard-summary span {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .dashboard-summary span:first-child {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .dashboard-summary span:last-child {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .dashboard-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-bottom: 3rem;
+        }
+
+        /* Красиві клікабельні строки */
+        .dashboard-card {
+            background: white;
+            border-left: 5px solid var(--primary);
+            padding: 1.2rem 1.5rem;
+            border-radius: 0;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: grid;
+            grid-template-columns: 1fr auto auto auto;
+            gap: 2rem;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+        }
+
+        .dashboard-card::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background: rgba(31, 78, 120, 0.05);
+            border-radius: 50%;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            background: linear-gradient(90deg, #f8fafb 0%, #ffffff 100%);
+            border-left-color: #4472C4;
+            box-shadow: inset -3px 0 10px rgba(31, 78, 120, 0.1);
+            padding-right: 4rem;
+        }
+
+        .dashboard-card:hover::after {
+            opacity: 1;
+        }
+
+        .dashboard-card-title {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .dashboard-card-count {
+            color: #4472C4;
+            font-weight: 700;
+            font-size: 1.4rem;
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .dashboard-card-count-label {
+            font-size: 0.75rem;
+            color: #999;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .dashboard-card-sum {
+            color: #00B050;
+            font-weight: 700;
+            font-size: 1.2rem;
+            text-align: right;
+            min-width: 130px;
+        }
+
+        .dashboard-card-sum-label {
+            font-size: 0.75rem;
+            color: #999;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .dashboard-card-action {
+            color: #999;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding-right: 1rem;
+        }
+
+
+
+        /* ===== ТАБЛИЦЯ ЛІДІВ ===== */
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+
+        .toolbar {
+            background: linear-gradient(135deg, #f8f9fb 0%, #ffffff 100%);
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: nowrap;
+            align-items: center;
+            border: 1px solid #e8eef5;
+            overflow-x: auto;
+        }
+
+        .search-input, .filter-select {
+            padding: 0.5rem 0.7rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            background: white;
+            min-width: 120px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .toolbar .btn {
+            padding: 0.5rem 0.7rem;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+            height: 36px;
+        }
+
+        .search-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(31, 78, 120, 0.1);
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        /* Мультивибірні фільтри */
+        .filter-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .filter-btn {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            height: 36px;
+        }
+
+        .filter-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--secondary);
+        }
+
+        .filter-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 0.5rem;
+        }
+
+        .filter-dropdown.active .filter-menu {
+            display: block !important;
+        }
+
+        .filter-option {
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .filter-option:hover {
+            background: #f8f9fa;
+        }
+
+        .filter-option:last-child {
+            border-bottom: none;
+        }
+
+        .filter-option input[type="checkbox"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+
+        .filter-option label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        /* Теги для вибраних фільтрів */
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+            min-height: 28px;
+        }
+
+        .filter-tag {
+            background: var(--secondary);
+            color: white;
+            padding: 0.3rem 0.7rem;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            animation: slideIn 0.2s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .filter-tag-remove {
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 0.2rem;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        }
+
+        .filter-tag-remove:hover {
+            opacity: 1;
+        }
+
+        /* Dark mode для filter menu */
+        body.dark-mode .filter-menu {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+
+        body.dark-mode .filter-option {
+            color: var(--text-primary);
+            border-bottom-color: var(--border-color);
+        }
+
+        body.dark-mode .filter-option:hover {
+            background: var(--bg-tertiary);
+        }
+
+        body.dark-mode .filter-tag {
+            background: var(--secondary);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #153a5c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(31, 78, 120, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 4px rgba(31, 78, 120, 0.3);
+        }
+
+        .btn-success:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(112, 173, 71, 0.3);
+        }
+
+        .btn-success:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 4px rgba(112, 173, 71, 0.3);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+        }
+
+        .btn-danger:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 4px rgba(255, 0, 0, 0.3);
+
+        /* ===== ТАБЛИЦЯ ===== */
+        /* Горизонтальний скрол вверху таблиці */
+        /* ===== ТАБЛИЦЯ ===== */
+            background: white;
+            border-radius: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            height: 20px;
+            margin-top: 1rem;
+            margin-bottom: -5px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .horizontal-scroll-container::-webkit-scrollbar {
+            height: 18px;
+        }
+
+        .horizontal-scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .horizontal-scroll-container::-webkit-scrollbar-thumb {
+            background: #1F4E78;
+            border-radius: 10px;
+        }
+
+        .horizontal-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #4472C4;
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 8px;
+            overflow-x: visible;
+            overflow-y: auto;
+            max-height: calc(100vh - 300px);
+            min-height: 600px;
+            width: 100%;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e0e0e0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            table-layout: fixed;
+            background: white;
+            border-top: 2px solid #E0E8F0;
+            border-bottom: 2px solid #E0E8F0;
+        }
+
+        thead {
+            background: var(--primary);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 0.3rem 0.4rem;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            background: var(--primary);
+            color: white;
+            z-index: 10;
+            font-size: 0.75rem;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            height: 32px;
+            line-height: 1;
+            word-break: break-word;
+            min-width: 50px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        td {
+            padding: 0.4rem 0.6rem;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.8rem;
+            vertical-align: middle;
+            height: auto;
+            line-height: 1.4;
+            word-break: break-word;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            min-width: 50px;
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fb;
+            box-shadow: inset 0 0 0 1px #e0e8f0;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafbfc;
+        }
+
+        /* Приховую синій скрол таблиці */
+        .table-wrapper::-webkit-scrollbar-horizontal {
+            display: none;
+        }
+
+        /* Стиль для скрол-бара */
+        .table-wrapper::-webkit-scrollbar {
+            height: 10px;
+            width: 10px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #1F4E78;
+            border-radius: 10px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #4472C4;
+        }
+
+        /* Горизонтальний скрол вверху таблиці */
+
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .status-new { background: #E7F3FF; color: #0066CC; }
+        .status-contact { background: #E2F0D9; color: #00B050; }
+        .status-active { background: #FFF2CC; color: #FF9900; }
+        .status-closed { background: #F0F0F0; color: #999; }
+
+        .overdue {
+            background: #FFE6E6;
+            color: #CC0000;
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+        }
+
+        .on-time {
+            background: #E2F0D9;
+            color: #00B050;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+        }
+
+        /* ===== МОДАЛЬНЕ ВІКНО ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            max-width: 750px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .form-input, .form-select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-input:focus, .form-select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(31, 78, 120, 0.1);
+        }
+
+        /* Форма у два стовпці */
+        form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        form > .form-group:nth-child(1),
+        form > .form-group:nth-child(2) {
+            grid-column: span 1;
+        }
+
+        /* Повна ширина для коментара */
+        form > .form-group:has(textarea) {
+            grid-column: 1 / -1;
+        }
+
+        /* Повна ширина для кнопок */
+        form > button {
+            grid-column: 1 / -1;
+            margin-top: 1rem;
+        }
+
+        /* На мобільних - один стовпець */
+        @media (max-width: 768px) {
+            form {
+                grid-template-columns: 1fr;
+            }
+
+            form > .form-group:nth-child(1),
+            form > .form-group:nth-child(2) {
+                grid-column: span 1;
+            }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #E2F0D9;
+            color: #00B050;
+            border: 1px solid #00B050;
+        }
+
+        .alert-warning {
+            background: #FFF2CC;
+            color: #FF9900;
+            border: 1px solid #FF9900;
+        }
+
+        .alert-danger {
+            background: #FFE6E6;
+            color: #CC0000;
+            border: 1px solid #CC0000;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+        }
+
+        /* ============================================================
+           МОБІЛЬНА АДАПТАЦІЯ v3 — аватарка, карточки, FAB
+           Desktop: нічого не змінюється (все всередині @media)
+           ============================================================ */
+
+        /* --- Аватарка-кружок (прихована на десктопі) --- */
+        .mobile-avatar-wrap {
+            display: none;
+            position: relative;
+        }
+        .mobile-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.25);
+            border: 2px solid rgba(255,255,255,0.6);
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            padding: 0;
+        }
+        .mobile-avatar:hover { background: rgba(255,255,255,0.35); }
+
+        .mobile-avatar-dropdown {
+            display: none;
+            position: absolute;
+            top: 44px;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            min-width: 180px;
+            z-index: 1100;
+            overflow: hidden;
+            animation: dropdownSlide 0.2s ease;
+        }
+        .mobile-avatar-dropdown.open { display: block; }
+        .mobile-avatar-info {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .mobile-avatar-info span:first-child {
+            font-weight: 700;
+            color: #1F4E78;
+            font-size: 0.9rem;
+        }
+        .mobile-avatar-role {
+            font-size: 0.75rem;
+            color: #888;
+        }
+        .mobile-avatar-logout {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: none;
+            background: none;
+            text-align: left;
+            color: #e74c3c;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .mobile-avatar-logout:hover { background: #fef2f2; }
+
+        /* --- Мобільні карточки (приховані на десктопі) --- */
+        .mobile-cards-container {
+            display: none;
+        }
+
+        .mobile-lead-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid var(--primary);
+            padding: 0.8rem;
+            margin-bottom: 0.6rem;
+            cursor: pointer;
+            transition: box-shadow 0.2s, transform 0.15s;
+            position: relative;
+        }
+        .mobile-lead-card:active {
+            transform: scale(0.98);
+        }
+        .mobile-lead-card:hover {
+            box-shadow: 0 2px 12px rgba(31,78,120,0.12);
+        }
+        .mobile-lead-card.card-unassigned {
+            border-left-color: #FF0000;
+            background: #fff5f5;
+        }
+        .mobile-lead-card.card-new {
+            border-left-color: #FFC000;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .mobile-card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .mobile-card-row + .mobile-card-row { margin-top: 0.35rem; }
+
+        .mobile-card-name {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 60%;
+        }
+        .mobile-card-phone {
+            font-size: 0.8rem;
+            color: #555;
+            font-family: monospace;
+        }
+        .mobile-card-manager {
+            font-size: 0.7rem;
+            color: #1F4E78;
+            font-weight: 600;
+            background: #e8f0fe;
+            padding: 1px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 45%;
+            text-align: right;
+        }
+        .mobile-card-manager-none {
+            color: #e74c3c !important;
+            background: #fde8e8 !important;
+            font-weight: 700;
+        }
+        .mobile-card-meta {
+            font-size: 0.78rem;
+            color: #666;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .mobile-card-meta span {
+            white-space: nowrap;
+        }
+        .mobile-card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .mobile-card-budget {
+            font-weight: 700;
+            color: #00B050;
+            font-size: 0.85rem;
+        }
+        .mobile-card-stage {
+            font-size: 0.75rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            background: #E7F3FF;
+            color: #1F4E78;
+            font-weight: 600;
+        }
+        .mobile-card-days {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .mobile-card-days.overdue { color: #e74c3c; }
+        .mobile-card-days.on-time { color: #00B050; }
+
+        /* Верхній рядок: ID зліва + Джерело справа */
+        .mobile-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.3rem;
+        }
+        .mobile-card-id {
+            font-size: 0.7rem;
+            color: #1F4E78;
+            font-weight: 700;
+            background: #e8f0fe;
+            padding: 2px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .mobile-card-id:active {
+            background: #4472C4;
+            color: white;
+        }
+
+        .mobile-card-source {
+            font-size: 0.7rem;
+            color: #888;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 55%;
+            text-align: right;
+            flex-shrink: 1;
+        }
+
+        /* Деталі в мобільній картці */
+        .mobile-card-details {
+            margin-top: 0.6rem;
+            padding-top: 0.6rem;
+            border-top: 1px dashed #d0d7e0;
+            animation: slideDown 0.2s ease;
+        }
+        .mobile-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .mobile-detail-item {
+            background: #f5f7fa;
+            border-radius: 6px;
+            padding: 6px 8px;
+        }
+        .mobile-detail-label {
+            font-size: 0.65rem;
+            color: #888;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .mobile-detail-value {
+            font-size: 0.8rem;
+            color: #1a1a1a;
+            font-weight: 600;
+            display: block;
+            margin-top: 1px;
+            word-break: break-word;
+        }
+        .mobile-detail-comment {
+            grid-column: 1 / -1;
+        }
+        .mobile-card-actions {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .mobile-card-actions-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+        .mobile-card-edit-btn {
+            background: #f39c12;
+            color: white;
+        }
+        .mobile-lead-card.card-expanded {
+            box-shadow: 0 4px 16px rgba(31,78,120,0.18);
+            border-left-color: #4472C4;
+        }
+
+        /* --- FAB кнопка (прихована на десктопі) --- */
+        .mobile-fab {
+            display: none;
+            position: fixed;
+            bottom: 1.2rem;
+            right: 1.2rem;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1F4E78 0%, #4472C4 100%);
+            color: white;
+            border: none;
+            font-size: 1.8rem;
+            font-weight: 300;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(31,78,120,0.35);
+            z-index: 900;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            line-height: 1;
+        }
+        .mobile-fab:active {
+            transform: scale(0.92);
+            box-shadow: 0 2px 8px rgba(31,78,120,0.25);
+        }
+
+        /* ===== TABLET: max-width 768px ===== */
+        @media (max-width: 768px) {
+
+            /* --- НАВБАР --- */
+            .navbar {
+                flex-wrap: wrap;
+                padding: 0.6rem 0.8rem !important;
+                padding-right: 0.8rem !important;
+                gap: 0.4rem;
+            }
+
+            .navbar-brand {
+                order: 1;
+                flex-shrink: 0;
+            }
+
+            .dark-mode-toggle {
+                order: 2;
+                margin-left: auto;
+                margin-right: 0.3rem;
+            }
+
+            .mobile-avatar-wrap {
+                display: block;
+                order: 3;
+            }
+
+            /* Ховаємо десктопне меню юзера */
+            .navbar-right {
+                display: none !important;
+            }
+
+            /* Піли — завжди видимі, горизонтальний скрол, з лівого краю */
+            .dashboard-type-pills {
+                order: 4;
+                width: 100%;
+                margin: 0 !important;
+                margin-left: 0 !important;
+                overflow-x: auto;
+                overflow-y: visible;
+                -webkit-overflow-scrolling: touch;
+                flex-wrap: nowrap;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                padding-bottom: 2px;
+                justify-content: flex-start;
+            }
+            .dashboard-type-pills::-webkit-scrollbar { display: none; }
+
+            /* Яскравіші піли на мобілці — однаковий розмір, прямокутники */
+            .type-pill {
+                background: rgba(255,255,255,0.18) !important;
+                border: 1.5px solid rgba(255,255,255,0.5) !important;
+                backdrop-filter: blur(4px);
+                font-size: 0.72rem;
+                min-width: 80px;
+                padding: 0.35rem 0.6rem !important;
+                border-radius: 6px !important;
+                text-align: center;
+                flex-shrink: 0;
+            }
+            .type-pill.active {
+                background: rgba(255,255,255,0.4) !important;
+                border-color: white !important;
+                box-shadow: 0 0 8px rgba(255,255,255,0.3);
+            }
+            .rent-pill {
+                min-width: 80px;
+            }
+            .rent-pill .dropdown-arrow {
+                display: none;
+            }
+            .rent-dropdown {
+                display: flex !important;
+            }
+
+            /* Оренда dropdown: фіксований, справа */
+            .rent-dropdown-menu {
+                position: fixed !important;
+                top: auto !important;
+                right: 1rem !important;
+                left: auto !important;
+                transform: none !important;
+                z-index: 2000 !important;
+                min-width: 200px;
+                border-radius: 12px;
+            }
+            .rent-option {
+                font-size: 0.9rem !important;
+                padding: 12px 18px !important;
+            }
+
+            /* --- КОНТЕЙНЕР --- */
+            .container {
+                padding: 0.6rem 0.4rem;
+                padding-top: calc(0.6rem + 120px);
+            }
+
+            .section-title {
+                font-size: 1rem;
+                margin: 0;
+            }
+            #leadsTitle {
+                font-size: 1.2rem !important;
+                font-weight: 800;
+            }
+
+            /* --- ДАШБОРД / МЕНЕДЖЕРИ / ЛІДИ: заголовок-бар --- */
+            .dashboard-header {
+                background: var(--bg-secondary);
+                border: 1px solid var(--border-color);
+                border-radius: 10px;
+                padding: 0.6rem 0.8rem;
+                margin-bottom: 0.5rem;
+            }
+            .dashboard-header .toggle-btn {
+                width: 34px;
+                height: 34px;
+                font-size: 16px;
+                border-radius: 6px;
+                flex-shrink: 0;
+            }
+
+            .dashboard-summary {
+                padding: 1rem;
+                gap: 1rem;
+                font-size: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .dashboard-card {
+                grid-template-columns: 1fr auto auto;
+                gap: 0.8rem;
+                padding: 0.8rem 1rem;
+            }
+
+            .dashboard-card-action { display: none; }
+
+            .dashboard-card-count {
+                font-size: 1.1rem;
+                min-width: 40px;
+            }
+
+            .dashboard-card-sum {
+                font-size: 0.95rem;
+                min-width: 90px;
+            }
+
+            /* --- ТУЛБАР --- */
+            .toolbar {
+                flex-wrap: nowrap !important;
+                gap: 0.4rem !important;
+                padding: 0.4rem 0.5rem !important;
+                align-items: center !important;
+            }
+
+            .toolbar > div:first-child {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+            }
+
+            .toolbar > div:last-child {
+                flex-shrink: 0 !important;
+            }
+
+            .search-input {
+                min-width: 0 !important;
+                max-width: none !important;
+                flex: 1 1 auto !important;
+            }
+
+            /* Ховаємо "Колони" і "Додати ліда" (FAB замість них) */
+            .toolbar .btn[onclick="toggleColumnSettings()"],
+            .toolbar .btn[onclick="openAddLead()"] {
+                display: none !important;
+            }
+
+            /* --- ТАБЛИЦЯ: ховаємо, показуємо карточки --- */
+            .table-wrapper {
+                display: none !important;
+            }
+
+            .mobile-cards-container {
+                display: block !important;
+                max-height: calc(100vh - 260px);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                padding: 0.2rem;
+            }
+
+            /* --- FAB --- */
+            .mobile-fab {
+                display: flex;
+            }
+
+            /* --- МОДАЛКИ --- */
+            .modal-content {
+                padding: 1.2rem;
+                max-width: 95%;
+                margin: 0.5rem;
+            }
+
+            form {
+                grid-template-columns: 1fr;
+            }
+
+            form > .form-group:nth-child(1),
+            form > .form-group:nth-child(2) {
+                grid-column: span 1;
+            }
+
+            /* --- САЙДБАРИ --- */
+            #editSidebar,
+            #editSidebarRent,
+            #filtersSidebar {
+                width: 100% !important;
+            }
+
+            /* --- ФІЛЬТР-САЙДБАР РЕДИЗАЙН НА МОБІЛЦІ --- */
+            #filtersSidebar {
+                padding-top: 0 !important;
+            }
+            #filtersSidebar #filtersContainer {
+                padding: 1rem 1rem 2rem !important;
+            }
+            #filtersSidebar .filter-dropdown {
+                display: block !important;
+                margin-bottom: 0.3rem;
+            }
+            #filtersSidebar .filter-btn {
+                width: 100% !important;
+                padding: 0.9rem 1rem !important;
+                font-size: 1rem !important;
+                font-weight: 600 !important;
+                border-radius: 10px !important;
+                text-align: left;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            #filtersSidebar .filter-menu {
+                position: static !important;
+                margin-top: 0.3rem !important;
+                border-radius: 10px !important;
+                max-height: none !important;
+            }
+            #filtersSidebar .filter-option {
+                padding: 0.7rem 1rem !important;
+                font-size: 0.95rem !important;
+            }
+            #filtersSidebar .filter-option input[type="checkbox"] {
+                width: 20px !important;
+                height: 20px !important;
+            }
+            #filtersSidebar .filter-option label {
+                font-size: 0.95rem !important;
+            }
+
+            /* --- ОРЕНДА ДЕТАЛІ --- */
+            .rent-details-content {
+                grid-template-columns: 1fr 1fr !important;
+                padding: 10px !important;
+                gap: 8px !important;
+            }
+
+            /* --- МЕНЕДЖЕР-ФІЛЬТРИ --- */
+            #managerFiltersContainer {
+                flex-direction: column !important;
+            }
+
+            #managerCheckboxes {
+                flex-direction: column !important;
+                gap: 0.5rem !important;
+            }
+
+            .filter-tags { flex-wrap: wrap; }
+
+            /* --- ЛОГІН ФОРМА НА МОБІЛЦІ --- */
+            #loginScreen {
+                padding: 15px !important;
+                padding-top: 3vh !important;
+            }
+            #loginScreen form input,
+            #loginScreen form button {
+                position: relative;
+                z-index: 5;
+            }
+        }
+
+        /* ===== PHONE: max-width 576px ===== */
+        @media (max-width: 576px) {
+
+            .navbar {
+                padding: 0.5rem 0.6rem !important;
+            }
+
+            .navbar-brand {
+                font-size: 1rem;
+            }
+
+            .type-pill {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.7rem;
+            }
+
+            /* --- ДАШБОРД --- */
+            .dashboard-summary {
+                grid-template-columns: 1fr;
+                padding: 0.8rem;
+                text-align: center;
+            }
+
+            .dashboard-card {
+                grid-template-columns: 1fr auto;
+                gap: 0.5rem;
+                padding: 0.6rem 0.8rem;
+            }
+
+            .dashboard-card-sum { display: none; }
+
+            .dashboard-card-title { font-size: 0.85rem; }
+            .dashboard-card-count { font-size: 1rem; }
+
+            /* --- ТУЛБАР --- */
+            .toolbar {
+                gap: 0.3rem !important;
+                padding: 0.3rem 0.4rem !important;
+            }
+
+            /* Ховаємо "Всі" та "Фільтр" текст — лишаємо іконки */
+            .toolbar button[onclick="resetAllFilters()"] {
+                font-size: 0 !important;
+                padding: 0.4rem !important;
+                min-width: 32px;
+            }
+            .toolbar button[onclick="resetAllFilters()"]::before {
+                content: "🔄";
+                font-size: 1rem;
+            }
+
+            .search-input {
+                padding: 0.45rem !important;
+                font-size: 0.82rem;
+            }
+
+            .btn {
+                padding: 0.4rem 0.7rem;
+                font-size: 0.78rem;
+            }
+
+            /* --- КАРТОЧКИ --- */
+            .mobile-cards-container {
+                max-height: calc(100vh - 230px);
+            }
+
+            .mobile-lead-card {
+                padding: 0.7rem;
+            }
+
+            /* --- МОДАЛКИ --- */
+            .modal {
+                padding: 0.3rem !important;
+            }
+
+            .modal-content {
+                padding: 1rem;
+                max-width: 100%;
+                border-radius: 8px;
+                max-height: 95vh;
+            }
+
+            .modal-title { font-size: 1.1rem; }
+
+            .form-input, .form-select, textarea {
+                padding: 0.5rem;
+                font-size: 0.85rem;
+            }
+
+            .filter-btn {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.75rem;
+            }
+
+            .rent-details-content {
+                grid-template-columns: 1fr !important;
+            }
+
+            .rent-dropdown-menu { min-width: 140px; }
+
+            .mobile-fab {
+                bottom: 1rem;
+                right: 1rem;
+                width: 48px;
+                height: 48px;
+                font-size: 1.6rem;
+            }
+        }
+
+        /* ===== EXTRA SMALL: max-width 400px ===== */
+        @media (max-width: 400px) {
+
+            .navbar {
+                padding: 0.4rem 0.5rem !important;
+            }
+
+            .container {
+                padding: 0.4rem 0.2rem;
+                padding-top: calc(0.4rem + 115px);
+            }
+
+            .section-title { font-size: 0.95rem; }
+
+            .dashboard-summary {
+                padding: 0.7rem;
+                font-size: 0.82rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .dashboard-card {
+                padding: 0.5rem 0.6rem;
+            }
+
+            .toolbar > div { gap: 0.2rem !important; }
+
+            .modal-content { padding: 0.7rem; }
+            .modal-title { font-size: 1rem; }
+
+            .mobile-card-name { font-size: 0.88rem; }
+            .mobile-card-meta { font-size: 0.72rem; }
+        }
+
+        /* ===== DARK MODE для мобільних компонентів ===== */
+        body.dark-mode .mobile-lead-card {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+        body.dark-mode .mobile-lead-card.card-unassigned {
+            background: #2a1a1a;
+        }
+        body.dark-mode .mobile-card-name { color: var(--text-primary); }
+        body.dark-mode .mobile-card-meta { color: var(--text-secondary); }
+        body.dark-mode .mobile-card-phone { color: var(--text-secondary); }
+        body.dark-mode .mobile-card-manager { background: #2a3f5f; color: #8ab4f8; }
+        body.dark-mode .mobile-card-manager-none { background: #4a2020 !important; color: #ff6b6b !important; }
+        body.dark-mode .mobile-card-stage {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        body.dark-mode .mobile-avatar-dropdown {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+        }
+        body.dark-mode .mobile-avatar-info {
+            border-color: var(--border-color);
+        }
+        body.dark-mode .mobile-avatar-info span:first-child {
+            color: var(--text-primary);
+        }
+        body.dark-mode .mobile-avatar-role { color: var(--text-secondary); }
+        body.dark-mode .mobile-avatar-logout:hover {
+            background: #3a2020;
+        }
+        body.dark-mode .mobile-card-id {
+            background: #2a3f5f;
+            color: #8ab4f8;
+        }
+        body.dark-mode .mobile-card-source {
+            color: var(--text-secondary);
+        }
+        body.dark-mode .mobile-detail-item {
+            background: var(--bg-tertiary);
+        }
+        body.dark-mode .mobile-detail-value {
+            color: var(--text-primary);
+        }
+        body.dark-mode .mobile-detail-label {
+            color: var(--text-secondary);
+        }
+
+        /* ===== DARK MODE ===== */
+        body.dark-mode {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        body.dark-mode .navbar {
+            background: #121212;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        body.dark-mode .container {
+            background: var(--bg-primary);
+        }
+
+        body.dark-mode .toolbar {
+            background: linear-gradient(135deg, #2D2D2D 0%, #242424 100%);
+            border-color: var(--border-color);
+        }
+
+        body.dark-mode .search-input,
+        body.dark-mode .filter-select {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        body.dark-mode .search-input:focus,
+        body.dark-mode .filter-select:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.2);
+        }
+
+        body.dark-mode .table-wrapper {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        body.dark-mode table {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+
+        body.dark-mode th {
+            background: #1A1A1A;
+            color: var(--text-primary);
+            border-bottom-color: var(--border-color);
+        }
+
+        body.dark-mode td {
+            color: var(--text-primary);
+            border-bottom-color: var(--border-color);
+        }
+
+        body.dark-mode tbody tr:hover {
+            background: var(--bg-tertiary);
+            box-shadow: inset 0 0 0 1px var(--border-color);
+        }
+
+        body.dark-mode tbody tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        body.dark-mode .dashboard-card {
+            background: var(--bg-secondary);
+            border-left-color: var(--secondary);
+            color: var(--text-primary);
+        }
+
+        body.dark-mode .dashboard-card:hover {
+            background: var(--bg-tertiary);
+        }
+
+        body.dark-mode .dashboard-summary {
+            background: linear-gradient(135deg, #2A3F5F 0%, #3D5A80 100%);
+            color: var(--text-primary);
+        }
+
+        body.dark-mode .modal {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        body.dark-mode .modal-content {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        body.dark-mode input,
+        body.dark-mode textarea,
+        body.dark-mode select {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        body.dark-mode input:focus,
+        body.dark-mode textarea:focus,
+        body.dark-mode select:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.2);
+        }
+
+        /* Dark mode toggle button */
+        .dark-mode-toggle {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            margin-right: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode-toggle:hover {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+
+        /* Маленькі кнопки типів дашборду */
+        .dashboard-type-pills {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 8rem;
+            margin-right: auto;
+            align-items: center;
+        }
+
+        .type-pill {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .type-pill:hover {
+            border-color: white;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .type-pill.active {
+            background: rgba(255,255,255,0.3);
+            border-color: white;
+        }
+        
+        /* ⭐ DROPDOWN ОРЕНДА */
+        .rent-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .rent-pill .dropdown-arrow {
+            font-size: 0.6rem;
+            margin-left: 4px;
+            transition: transform 0.2s;
+        }
+        
+        .rent-dropdown.open .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .rent-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #1F4E78 0%, #2d6a9f 100%);
+            border-radius: 12px;
+            padding: 8px;
+            margin-top: 8px;
+            min-width: 160px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: dropdownSlide 0.2s ease;
+        }
+        
+        @keyframes dropdownSlide {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        .rent-dropdown.open .rent-dropdown-menu {
+            display: block;
+        }
+        
+        .rent-option {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            background: transparent;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        
+        .rent-option:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .rent-option.active {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Таблиця при згорнутому дашборді */
+        body.dashboard-collapsed .table-wrapper {
+            max-height: calc(100vh - 250px);
+        }
