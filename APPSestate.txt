@@ -750,29 +750,34 @@ function getAllLeadsNoFilter(manager, userRole, sheetType) {
 }
 
 // ================================
-// М'ЯКЕ ВИДАЛЕННЯ ЛІДА (позначка ВИДАЛЕНО в колонку T)
+// АРХІВУВАННЯ ЛІДА (копіювання в архів + видалення з основної таблиці)
 // ================================
 
 function softDeleteLead(leadId, rowIndex, type) {
   try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
     const isMortgage = type === 'Іпотека';
     const sheetName = getSheetForType(type || '');
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+    const sheet = ss.getSheetByName(sheetName);
     const userEmail = Session.getActiveUser().getEmail() || "admin@system";
-    // Для Іпотеки ВИДАЛЕНО в колонку U (21), для Нерухомості — T (20)
-    const deleteCol = isMortgage ? 21 : 20;
 
+    // Нерухомість → "Нерухомість Архів" (20 колонок A-T)
+    // Іпотека → "Іпотека Архів" (21 колонка A-U)
+    const archiveName = isMortgage ? "Іпотека Архів" : "Нерухомість Архів";
+    const colCount = isMortgage ? 21 : 20;
+    const archiveSheet = ss.getSheetByName(archiveName);
+
+    if (!archiveSheet) {
+      return { success: false, error: "Аркуш '" + archiveName + "' не знайдено" };
+    }
+
+    // Знаходимо рядок по ID (rowIndex ненадійний після deleteRow)
     let targetRow = null;
-
-    if (rowIndex && rowIndex > 1) {
-      targetRow = rowIndex;
-    } else {
-      const data = sheet.getRange("A:A").getValues();
-      for (let i = 1; i < data.length; i++) {
-        if (data[i][0] === leadId) {
-          targetRow = i + 1;
-          break;
-        }
+    const data = sheet.getRange("A:A").getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == leadId) {
+        targetRow = i + 1;
+        break;
       }
     }
 
@@ -780,11 +785,17 @@ function softDeleteLead(leadId, rowIndex, type) {
       return { success: false, error: "Ліда не знайдено" };
     }
 
-    sheet.getRange(targetRow, deleteCol).setValue("ВИДАЛЕНО");
+    // Копіюємо рядок в архів
+    const rowData = sheet.getRange(targetRow, 1, 1, colCount).getValues()[0];
+    const archiveNextRow = archiveSheet.getLastRow() + 1;
+    archiveSheet.getRange(archiveNextRow, 1, 1, colCount).setValues([rowData]);
 
-    logOperation("Видалив ліда (soft)", leadId, userEmail, "Позначено як ВИДАЛЕНО в " + sheetName);
+    // Видаляємо рядок з основного аркуша
+    sheet.deleteRow(targetRow);
 
-    return { success: true, message: "Ліда позначено як видалено" };
+    logOperation("Архівував ліда", leadId, userEmail, "Перенесено в " + archiveName);
+
+    return { success: true, message: "Ліда архівовано" };
   } catch (error) {
     debugLog("softDeleteLead ERROR: " + error.toString());
     return { success: false, error: "Помилка softDeleteLead: " + error.toString() };
