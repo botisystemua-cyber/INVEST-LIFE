@@ -5,9 +5,16 @@
 
 const SHEET_PROPERTIES = {
   propertySheet: "Нерухомість",
+  mortgageSheet: "Іпотека",
   usersSheet: "доступи",
   logsSheet: "логи"
 };
+
+// Визначає аркуш за типом ліда
+function getSheetForType(type) {
+  if (type === 'Іпотека') return SHEET_PROPERTIES.mortgageSheet;
+  return SHEET_PROPERTIES.propertySheet;
+}
 
 // ===== ІНІЦІАЛІЗАЦІЯ ПРИ ВІДКРИТТІ =====
 function onOpen(e) {
@@ -90,17 +97,30 @@ function parseBudget(budgetString) {
 
 function getStats(userRole, userName, type) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.propertySheet);
-    
+    const isMortgage = type === 'Іпотека';
+    const sheetName = getSheetForType(type);
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+
     if (!sheet) {
       return { success: false, error: "Аркуш лідів не знайдено" };
     }
 
     const lastRow = sheet.getLastRow();
-    const data = sheet.getRange("A2:R" + lastRow).getValues();
+    const range = isMortgage ? "A2:U" + lastRow : "A2:R" + lastRow;
+    const data = sheet.getRange(range).getValues();
 
-    // Ініціалізую етапи
-    const stageNames = {
+    // Ініціалізую етапи (різні для Іпотеки та Нерухомості)
+    const stageNames = isMortgage ? {
+      'Етап_1_Контакт': '1️⃣ Контакт',
+      'Етап_2_Кваліфікація': '2️⃣ Кваліфікація',
+      'Етап_3_Подача_в_банк': '3️⃣ Подача в банк',
+      'Етап_4_Схвалення_ліміту': '4️⃣ Схвалення ліміту',
+      'Етап_5_Підбір': '5️⃣ Підбір',
+      'Етап_6_Оцінка_об\'єкта': '6️⃣ Оцінка об\'єкта',
+      'Етап_7_FIPER': '7️⃣ FIPER',
+      'Етап_8_Нотаріус': '8️⃣ Нотаріус',
+      'Етап_9_Після': '9️⃣ Після'
+    } : {
       'Етап_1_Контакт': '1️⃣ Контакт',
       'Етап_2_Кваліфікація': '2️⃣ Кваліфікація',
       'Етап_3_Підбір': '3️⃣ Підбір',
@@ -111,6 +131,13 @@ function getStats(userRole, userName, type) {
       'Етап_8_Нотаріус': '8️⃣ Нотаріус',
       'Етап_9_Після': '9️⃣ Після'
     };
+
+    // Індекси колонок залежно від типу
+    const typeCol = isMortgage ? 5 : 4;       // F vs E
+    const managerCol = isMortgage ? 6 : 5;    // G vs F
+    const stageCol = isMortgage ? 7 : 6;      // H vs G
+    const budgetCol = isMortgage ? 11 : 10;   // L vs K
+    const dateAddedCol = isMortgage ? 19 : 17; // T vs R
 
     const stats = {
       totalCount: 0,
@@ -135,20 +162,20 @@ function getStats(userRole, userName, type) {
 
     // Проходжу через всі ліди
     for (let i = 0; i < data.length; i++) {
-      const leadType = data[i][4]; // Column E - Тип (Купівля/Продаж)
-      const managerName = data[i][5]; // Column F - Менеджер
-      const stage = data[i][6]; // Column G - Поточний Етап
-      const budget = data[i][10]; // Column K - Бюджет
-      const dateAdded = data[i][17]; // Column R - Дата додавання
+      const leadType = data[i][typeCol];
+      const managerName = data[i][managerCol];
+      const stage = data[i][stageCol];
+      const budget = data[i][budgetCol];
+      const dateAdded = data[i][dateAddedCol];
 
       // ФІЛЬТР ПО ТИПУ
       if (leadType !== type) {
-        continue; // Пропускаю якщо тип не збігається
+        continue;
       }
 
       // ФІЛЬТР ПО РОЛІ
       if (userRole === 'Manager' && managerName !== userName) {
-        continue; // Manager бачить ТІЛЬКИ СВОЇХ
+        continue;
       }
 
       // Парсимо бюджет (беремо верхню межу)
@@ -175,14 +202,8 @@ function getStats(userRole, userName, type) {
     // Обраховую додаткові метрики для кожного етапу
     Object.keys(stats.stages).forEach(stageKey => {
       const stage = stats.stages[stageKey];
-      
-      // Середній бюджет на ліда
       stage.avgBudget = stage.count > 0 ? Math.round(stage.sum / stage.count) : 0;
-      
-      // % від загальної суми
       stage.percentSum = stats.totalSum > 0 ? Math.round((stage.sum / stats.totalSum) * 100) : 0;
-      
-      // % конверсії (скільки % цього етапу від всього)
       stage.percentLeads = stats.totalCount > 0 ? Math.round((stage.count / stats.totalCount) * 100) : 0;
     });
 
@@ -280,21 +301,21 @@ function doPost(e) {
         response = getAllLeads(params.payload.type);
         break;
       case 'getAllLeadsNoFilter':
-        response = getAllLeadsNoFilter(params.payload.manager, params.payload.userRole);
+        response = getAllLeadsNoFilter(params.payload.manager, params.payload.userRole, params.payload.sheetType);
         break;
       case 'addLead':
         response = addLead(params.payload);
-        addConditionalFormattingForStatusText();
+        if (params.payload.type !== 'Іпотека') addConditionalFormattingForStatusText();
         break;
       case 'updateLead':
         response = updateLead(params.payload.leadId, params.payload);
-        addConditionalFormattingForStatusText();
+        if (params.payload.type !== 'Іпотека') addConditionalFormattingForStatusText();
         break;
       case 'deleteLead':
         response = deleteLead(params.payload.leadId);
         break;
       case 'softDeleteLead':
-        response = softDeleteLead(params.payload.leadId, params.payload.rowIndex);
+        response = softDeleteLead(params.payload.leadId, params.payload.rowIndex, params.payload.type);
         break;
       case 'getStatistics':
         response = getStatistics();
@@ -474,64 +495,70 @@ function getAllUsers() {
 // ================================
 
 function addLead(payload) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.propertySheet);
+  const isMortgage = payload.type === 'Іпотека';
+  const sheetName = getSheetForType(payload.type);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   const userEmail = Session.getActiveUser().getEmail() || "admin@system";
   const userData = getUserByEmail(userEmail);
-  
+
   // Генеруємо ID (ОЛЕГ-0001 формат)
   const managerName = userData ? userData.name : "Керівник";
-  const nextNum = getNextLeadNumber(managerName);
+  const nextNum = getNextLeadNumber(managerName, sheetName);
   const leadId = managerName + "-" + String(nextNum).padStart(4, '0');
 
   const nextRow = sheet.getLastRow() + 1;
   const today = new Date();
-  
-  // Основна колонка структура
-  const columns = {
-    A: leadId, // ID
-    B: payload.phone, // Телефон
-    C: payload.source, // Джерело
-    D: payload.language || "Українська", // Мова
-    E: payload.type, // Тип
-    F: payload.manager, // Менеджер
-    G: "Етап_1_Контакт", // Етап
-    // H: Дата наступного контакту (пусто)
-    // I: Днів залишилось (формула)
-    // J: Просрочено? (формула)
-    K: payload.budget || "0", // Бюджет
-    L: payload.district || "", // Район
-    M: payload.metaType || "", // Мета/Тип (Купівля) або Тип об'єкту (Продаж)
-    N: payload.area || "", // Площа
-    O: payload.rooms || "", // Кімнати
-    P: "", // Next Action (пусто)
-    Q: payload.comment || "", // ⭐ КОМЕНТАР
-    R: formatDate(today) // Дата додавання
-  };
 
-  // Записуємо дані в усі потрібні колони
-  sheet.getRange(nextRow, 1).setValue(columns.A); // A - ID
-  sheet.getRange(nextRow, 2).setValue(columns.B); // B - Телефон
-  sheet.getRange(nextRow, 3).setValue(columns.C); // C - Джерело
-  sheet.getRange(nextRow, 4).setValue(columns.D); // D - Мова
-  sheet.getRange(nextRow, 5).setValue(columns.E); // E - Тип
-  sheet.getRange(nextRow, 6).setValue(columns.F); // F - Менеджер
-  sheet.getRange(nextRow, 7).setValue(columns.G); // G - Етап
-  sheet.getRange(nextRow, 8).setValue(""); // H - Дата контакту (РЕДАГУЄТЬСЯ!)
-  // I (9) - Днів (формула на основі H)
-  sheet.getRange(nextRow, 9).setFormula('=IF(H' + nextRow + '="";"";H' + nextRow + '-TODAY())');
-  // J (10) - Статус (формула на основі I)
-  sheet.getRange(nextRow, 10).setFormula('=IF(I' + nextRow + '="";"";IF(I' + nextRow + '<0;"ПРОСРОЧЕНО";IF(I' + nextRow + '<=2;"СКОРО";"OK")))');
-  sheet.getRange(nextRow, 11).setValue(columns.K); // K - Бюджет
-  sheet.getRange(nextRow, 12).setValue(columns.L); // L - Район
-  sheet.getRange(nextRow, 13).setValue(columns.M); // M - Мета/Тип
-  sheet.getRange(nextRow, 14).setValue(columns.N); // N - Площа
-  sheet.getRange(nextRow, 15).setValue(columns.O); // O - Кімнати
-  sheet.getRange(nextRow, 16).setValue(columns.P); // P - Next Action
-  sheet.getRange(nextRow, 17).setValue(columns.Q); // Q - Коментар
-  sheet.getRange(nextRow, 18).setValue(columns.R); // R - Дата додавання
-  sheet.getRange(nextRow, 19).setValue(payload.fullName || ''); // S - ПІБ
+  if (isMortgage) {
+    // ⭐ ІПОТЕКА — інший маппінг колонок
+    sheet.getRange(nextRow, 1).setValue(leadId);                          // A - ID
+    sheet.getRange(nextRow, 2).setValue(payload.fullName || '');           // B - ПІБ
+    sheet.getRange(nextRow, 3).setValue(payload.phone);                   // C - Телефон
+    sheet.getRange(nextRow, 4).setValue(payload.source);                  // D - Джерело
+    sheet.getRange(nextRow, 5).setValue(payload.language || "Українська"); // E - Мова
+    sheet.getRange(nextRow, 6).setValue(payload.type);                    // F - Тип
+    sheet.getRange(nextRow, 7).setValue(payload.manager);                 // G - Менеджер
+    sheet.getRange(nextRow, 8).setValue("Етап_1_Контакт");               // H - Етап
+    sheet.getRange(nextRow, 9).setValue("");                              // I - Дата контакту
+    // J (10) - Днів (формула на основі I)
+    sheet.getRange(nextRow, 10).setFormula('=IF(I' + nextRow + '="";"";I' + nextRow + '-TODAY())');
+    // K (11) - Прострочено (формула на основі J)
+    sheet.getRange(nextRow, 11).setFormula('=IF(J' + nextRow + '="";"";IF(J' + nextRow + '<0;"ПРОСРОЧЕНО";IF(J' + nextRow + '<=2;"СКОРО";"OK")))');
+    sheet.getRange(nextRow, 12).setValue(payload.budget || "0");          // L - Бюджет
+    sheet.getRange(nextRow, 13).setValue(payload.taxResidency || "");     // M - Податкова резиденція
+    sheet.getRange(nextRow, 14).setValue(payload.income || "");           // N - Дохід
+    sheet.getRange(nextRow, 15).setValue(payload.incomeCountry || "");    // O - Країна доходу
+    sheet.getRange(nextRow, 16).setValue(payload.whenPlans || "");        // P - Коли планує
+    sheet.getRange(nextRow, 17).setValue(payload.adults || "");           // Q - К-сть дорослих
+    sheet.getRange(nextRow, 18).setValue(payload.children || "");         // R - К-сть дітей
+    sheet.getRange(nextRow, 19).setValue(payload.comment || "");          // S - Коментар
+    sheet.getRange(nextRow, 20).setValue(formatDate(today));              // T - Дата додавання
+  } else {
+    // ⭐ НЕРУХОМІСТЬ — оригінальний маппінг
+    sheet.getRange(nextRow, 1).setValue(leadId);                          // A - ID
+    sheet.getRange(nextRow, 2).setValue(payload.phone);                   // B - Телефон
+    sheet.getRange(nextRow, 3).setValue(payload.source);                  // C - Джерело
+    sheet.getRange(nextRow, 4).setValue(payload.language || "Українська"); // D - Мова
+    sheet.getRange(nextRow, 5).setValue(payload.type);                    // E - Тип
+    sheet.getRange(nextRow, 6).setValue(payload.manager);                 // F - Менеджер
+    sheet.getRange(nextRow, 7).setValue("Етап_1_Контакт");               // G - Етап
+    sheet.getRange(nextRow, 8).setValue("");                              // H - Дата контакту
+    // I (9) - Днів (формула на основі H)
+    sheet.getRange(nextRow, 9).setFormula('=IF(H' + nextRow + '="";"";H' + nextRow + '-TODAY())');
+    // J (10) - Статус (формула на основі I)
+    sheet.getRange(nextRow, 10).setFormula('=IF(I' + nextRow + '="";"";IF(I' + nextRow + '<0;"ПРОСРОЧЕНО";IF(I' + nextRow + '<=2;"СКОРО";"OK")))');
+    sheet.getRange(nextRow, 11).setValue(payload.budget || "0");          // K - Бюджет
+    sheet.getRange(nextRow, 12).setValue(payload.district || "");         // L - Район
+    sheet.getRange(nextRow, 13).setValue(payload.metaType || "");         // M - Мета/Тип
+    sheet.getRange(nextRow, 14).setValue(payload.area || "");             // N - Площа
+    sheet.getRange(nextRow, 15).setValue(payload.rooms || "");            // O - Кімнати
+    sheet.getRange(nextRow, 16).setValue("");                             // P - Next Action
+    sheet.getRange(nextRow, 17).setValue(payload.comment || "");          // Q - Коментар
+    sheet.getRange(nextRow, 18).setValue(formatDate(today));              // R - Дата додавання
+    sheet.getRange(nextRow, 19).setValue(payload.fullName || '');         // S - ПІБ
+  }
 
-  logOperation("Додав новий ліда", leadId, userEmail, 
+  logOperation("Додав новий ліда", leadId, userEmail,
     "Телефон: " + payload.phone + ", Джерело: " + payload.source + ", Коментар: " + (payload.comment || "немає"));
 
   return { success: true, leadId: leadId };
@@ -539,10 +566,12 @@ function addLead(payload) {
 
 function getLeads(manager, type) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.propertySheet);
-    
+    const isMortgage = type === 'Іпотека';
+    const sheetName = getSheetForType(type);
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+
     if (!sheet) {
-      return { success: false, error: "Аркуш '" + SHEET_PROPERTIES.propertySheet + "' не знайдено" };
+      return { success: false, error: "Аркуш '" + sheetName + "' не знайдено" };
     }
 
     const lastRow = sheet.getLastRow();
@@ -553,30 +582,26 @@ function getLeads(manager, type) {
       return { success: true, leads: [] };
     }
 
-    const data = sheet.getRange("A2:T" + lastRow).getValues();
+    const range = isMortgage ? "A2:U" + lastRow : "A2:T" + lastRow;
+    const data = sheet.getRange(range).getValues();
+    const typeCol = isMortgage ? 5 : 4;       // F vs E
+    const managerCol = isMortgage ? 6 : 5;    // G vs F
+    const builder = isMortgage ? buildMortgageLeadObject : buildLeadObject;
     const leads = [];
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
-      
-      // Перевіряємо чи є дані в рядку
       if (!row || !row[0]) continue;
-      
-      // E (індекс 4) - Тип (Купівля/Продаж)
-      const leadType = row[4];
-      
-      // F (індекс 5) - Менеджер
-      const leadManager = row[5];
-      
+
+      const leadType = row[typeCol];
+      const leadManager = row[managerCol];
+
       // ФІЛЬТР ПО ТИПУ
-      if (leadType !== type) {
-        continue; // Пропускаю якщо тип не збігається
-      }
-      
+      if (leadType !== type) continue;
+
       // ФІЛЬТР ПО МЕНЕДЖЕРУ
       if (leadManager === manager || leadManager == manager) {
-        debugLog("getLeads: Знайдено ліда з ID=" + row[0] + ", менеджер=" + leadManager + ", тип=" + leadType);
-        leads.push(buildLeadObject(row, i + 2)); // ⭐ i+2 бо дані з рядка 2 (A2:T)
+        leads.push(builder(row, i + 2));
       }
     }
 
@@ -592,28 +617,45 @@ function getLeads(manager, type) {
 // ОТРИМАННЯ ОДНОГО ЛІДА ПО ID
 // ================================
 
-function getLeadById(leadId, phone) {
+function getLeadById(leadId, phone, type) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.propertySheet);
-    const data = sheet.getRange("A:T").getValues();
-    
-    debugLog("getLeadById: шукаю ліда ID=" + leadId + ", phone=" + phone);
-    
+    const isMortgage = type === 'Іпотека';
+    const sheetName = getSheetForType(type || '');
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+    const range = isMortgage ? "A:U" : "A:T";
+    const phoneCol = isMortgage ? 2 : 1; // C vs B
+    const builder = isMortgage ? buildMortgageLeadObject : buildLeadObject;
+    const data = sheet.getRange(range).getValues();
+
+    debugLog("getLeadById: шукаю ліда ID=" + leadId + ", phone=" + phone + ", sheet=" + sheetName);
+
     for (let i = 1; i < data.length; i++) {
-      // Шукаю за ID, потім перевіряю Phone щоб гарантувати унікальність
       if (data[i][0] === leadId) {
-        // Якщо phone передано, перевіряю щоб впевнитись що це правильний лід
-        if (phone && data[i][1] !== phone) {
-          debugLog("  Рядок " + (i+2) + ": ID матчить але phone не збігається, пропускаю");
+        if (phone && data[i][phoneCol] !== phone) {
+          debugLog("  Рядок " + (i+1) + ": ID матчить але phone не збігається, пропускаю");
           continue;
         }
-        
-        const lead = buildLeadObject(data[i], i + 1); // ⭐ i+1 бо дані з A:S (рядок 1 = заголовок)
-        debugLog("getLeadById: ліда знайдено - ID=" + leadId + ", phone=" + data[i][1] + ", rowIndex=" + (i + 1));
+
+        const lead = builder(data[i], i + 1);
+        debugLog("getLeadById: ліда знайдено - ID=" + leadId + ", rowIndex=" + (i + 1));
         return { success: true, lead: lead };
       }
     }
-    
+
+    // Якщо тип не передано — шукаємо також в Іпотеці
+    if (!type) {
+      const mortSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.mortgageSheet);
+      if (mortSheet) {
+        const mortData = mortSheet.getRange("A:U").getValues();
+        for (let i = 1; i < mortData.length; i++) {
+          if (mortData[i][0] === leadId) {
+            if (phone && mortData[i][2] !== phone) continue;
+            return { success: true, lead: buildMortgageLeadObject(mortData[i], i + 1) };
+          }
+        }
+      }
+    }
+
     debugLog("getLeadById: ліда не знайдено - ID=" + leadId + ", phone=" + phone);
     return { success: false, error: "Ліда не знайдено" };
   } catch (error) {
@@ -624,10 +666,12 @@ function getLeadById(leadId, phone) {
 
 function getAllLeads(type) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.propertySheet);
-    
+    const isMortgage = type === 'Іпотека';
+    const sheetName = getSheetForType(type);
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+
     if (!sheet) {
-      return { success: false, error: "Аркуш '" + SHEET_PROPERTIES.propertySheet + "' не знайдено" };
+      return { success: false, error: "Аркуш '" + sheetName + "' не знайдено" };
     }
 
     const lastRow = sheet.getLastRow();
@@ -637,20 +681,18 @@ function getAllLeads(type) {
       return { success: true, leads: [] };
     }
 
-    const data = sheet.getRange("A2:T" + lastRow).getValues();
+    const range = isMortgage ? "A2:U" + lastRow : "A2:T" + lastRow;
+    const data = sheet.getRange(range).getValues();
+    const typeCol = isMortgage ? 5 : 4;
+    const builder = isMortgage ? buildMortgageLeadObject : buildLeadObject;
     const leads = [];
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
-      
-      // Перевіряємо чи є дані в рядку
       if (row && row[0]) {
-        // E (індекс 4) - Тип (Купівля/Продаж)
-        const leadType = row[4];
-        
-        // ФІЛЬТР ПО ТИПУ
+        const leadType = row[typeCol];
         if (leadType === type || leadType == type) {
-          leads.push(buildLeadObject(row, i + 2)); // ⭐ i+2 бо дані з рядка 2 (A2:T)
+          leads.push(builder(row, i + 2));
         }
       }
     }
@@ -667,32 +709,35 @@ function getAllLeads(type) {
 // ОТРИМАННЯ ВСІХ ЛІДІВ БЕЗ ФІЛЬТРА ПО ТИПУ
 // ================================
 
-function getAllLeadsNoFilter(manager, userRole) {
+function getAllLeadsNoFilter(manager, userRole, sheetType) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.propertySheet);
-    
+    const isMortgage = sheetType === 'Іпотека';
+    const sheetName = isMortgage ? SHEET_PROPERTIES.mortgageSheet : SHEET_PROPERTIES.propertySheet;
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+
     if (!sheet) {
-      return { success: false, error: "Аркуш '" + SHEET_PROPERTIES.propertySheet + "' не знайдено" };
+      return { success: false, error: "Аркуш '" + sheetName + "' не знайдено" };
     }
 
     const lastRow = sheet.getLastRow();
-    debugLog("getAllLeadsNoFilter: manager=" + manager + ", role=" + userRole);
+    debugLog("getAllLeadsNoFilter: manager=" + manager + ", role=" + userRole + ", sheet=" + sheetName);
 
     if (lastRow < 2) {
       return { success: true, leads: [] };
     }
 
-    // A:T (20 колонок)
-    const data = sheet.getRange("A2:T" + lastRow).getValues();
+    const range = isMortgage ? "A2:U" + lastRow : "A2:T" + lastRow;
+    const data = sheet.getRange(range).getValues();
+    const managerCol = isMortgage ? 6 : 5; // G vs F
+    const builder = isMortgage ? buildMortgageLeadObject : buildLeadObject;
     const leads = [];
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       if (!row || !row[0]) continue;
-      
-      // Якщо Manager — фільтруємо по менеджеру, якщо Admin — беремо все
-      if (userRole === 'Admin' || row[5] === manager || row[5] == manager) {
-        leads.push(buildLeadObject(row, i + 2));
+
+      if (userRole === 'Admin' || row[managerCol] === manager || row[managerCol] == manager) {
+        leads.push(builder(row, i + 2));
       }
     }
 
@@ -705,38 +750,52 @@ function getAllLeadsNoFilter(manager, userRole) {
 }
 
 // ================================
-// М'ЯКЕ ВИДАЛЕННЯ ЛІДА (позначка ВИДАЛЕНО в колонку T)
+// АРХІВУВАННЯ ЛІДА (копіювання в архів + видалення з основної таблиці)
 // ================================
 
-function softDeleteLead(leadId, rowIndex) {
+function softDeleteLead(leadId, rowIndex, type) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.propertySheet);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const isMortgage = type === 'Іпотека';
+    const sheetName = getSheetForType(type || '');
+    const sheet = ss.getSheetByName(sheetName);
     const userEmail = Session.getActiveUser().getEmail() || "admin@system";
-    
+
+    // Нерухомість → "Нерухомість Архів" (20 колонок A-T)
+    // Іпотека → "Іпотека Архів" (21 колонка A-U)
+    const archiveName = isMortgage ? "Іпотека Архів" : "Нерухомість Архів";
+    const colCount = isMortgage ? 21 : 20;
+    const archiveSheet = ss.getSheetByName(archiveName);
+
+    if (!archiveSheet) {
+      return { success: false, error: "Аркуш '" + archiveName + "' не знайдено" };
+    }
+
+    // Знаходимо рядок по ID (rowIndex ненадійний після deleteRow)
     let targetRow = null;
-    
-    if (rowIndex && rowIndex > 1) {
-      targetRow = rowIndex;
-    } else {
-      const data = sheet.getRange("A:A").getValues();
-      for (let i = 1; i < data.length; i++) {
-        if (data[i][0] === leadId) {
-          targetRow = i + 1;
-          break;
-        }
+    const data = sheet.getRange("A:A").getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == leadId) {
+        targetRow = i + 1;
+        break;
       }
     }
-    
+
     if (!targetRow) {
       return { success: false, error: "Ліда не знайдено" };
     }
-    
-    // T = колонка 20 — записуємо ВИДАЛЕНО
-    sheet.getRange(targetRow, 20).setValue("ВИДАЛЕНО");
-    
-    logOperation("Видалив ліда (soft)", leadId, userEmail, "Позначено як ВИДАЛЕНО");
-    
-    return { success: true, message: "Ліда позначено як видалено" };
+
+    // Копіюємо рядок в архів
+    const rowData = sheet.getRange(targetRow, 1, 1, colCount).getValues()[0];
+    const archiveNextRow = archiveSheet.getLastRow() + 1;
+    archiveSheet.getRange(archiveNextRow, 1, 1, colCount).setValues([rowData]);
+
+    // Видаляємо рядок з основного аркуша
+    sheet.deleteRow(targetRow);
+
+    logOperation("Архівував ліда", leadId, userEmail, "Перенесено в " + archiveName);
+
+    return { success: true, message: "Ліда архівовано" };
   } catch (error) {
     debugLog("softDeleteLead ERROR: " + error.toString());
     return { success: false, error: "Помилка softDeleteLead: " + error.toString() };
@@ -744,141 +803,205 @@ function softDeleteLead(leadId, rowIndex) {
 }
 
 function updateLead(leadId, payload) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.propertySheet);
+  const isMortgage = payload.type === 'Іпотека';
+  const sheetName = getSheetForType(payload.type || '');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   const userEmail = Session.getActiveUser().getEmail() || "admin@system";
-  
-  debugLog("updateLead: leadId=" + leadId + ", rowIndex=" + payload.rowIndex);
-  
-  // ⭐ Якщо є rowIndex — використовуємо його (100% точність)
+
+  debugLog("updateLead: leadId=" + leadId + ", rowIndex=" + payload.rowIndex + ", sheet=" + sheetName);
+
   let targetRow = null;
-  
+
   if (payload.rowIndex && payload.rowIndex > 1) {
     targetRow = payload.rowIndex;
     debugLog("updateLead: використовую rowIndex=" + targetRow);
   } else {
-    // Резервний варіант — шукаємо по ID + phone
-    const data = sheet.getRange("A:B").getValues();
+    const phoneCol = isMortgage ? 2 : 1; // C vs B
+    const data = sheet.getRange("A:C").getValues();
     for (let i = 1; i < data.length; i++) {
-      if (data[i][0] === leadId && (!payload.phone || data[i][1] === payload.phone)) {
+      if (data[i][0] === leadId && (!payload.phone || data[i][phoneCol] === payload.phone)) {
         targetRow = i + 1;
-        debugLog("updateLead: знайдено по ID+phone, рядок=" + targetRow);
         break;
       }
     }
   }
-  
+
   if (!targetRow) {
     debugLog("updateLead: ліда не знайдено!");
     return { success: false, error: "Ліда не знайдено" };
   }
-  
-  // Читаю поточні дані рядка
-  const rowData = sheet.getRange(targetRow, 1, 1, 20).getValues()[0];
+
+  const colCount = isMortgage ? 21 : 20;
+  const rowData = sheet.getRange(targetRow, 1, 1, colCount).getValues()[0];
   let changes = [];
-      
-  // A (1) - ID
-  if (payload.id && payload.id !== rowData[0]) {
-    changes.push("ID: " + (rowData[0] || "—") + " → " + payload.id);
-    sheet.getRange(targetRow, 1).setValue(payload.id);
+
+  if (isMortgage) {
+    // ⭐ ІПОТЕКА — інший маппінг колонок
+    // B (2) - ПІБ
+    if (payload.fullName !== undefined && payload.fullName !== rowData[1]) {
+      changes.push("ПІБ: " + (rowData[1] || "—") + " → " + payload.fullName);
+      sheet.getRange(targetRow, 2).setValue(payload.fullName);
+    }
+    // C (3) - Телефон
+    if (payload.phone !== undefined && payload.phone !== rowData[2]) {
+      changes.push("Телефон: " + (rowData[2] || "—") + " → " + payload.phone);
+      sheet.getRange(targetRow, 3).setValue(payload.phone);
+    }
+    // D (4) - Джерело
+    if (payload.source !== undefined && payload.source !== rowData[3]) {
+      changes.push("Джерело: " + (rowData[3] || "—") + " → " + payload.source);
+      sheet.getRange(targetRow, 4).setValue(payload.source);
+    }
+    // E (5) - Мова
+    if (payload.language !== undefined && payload.language !== rowData[4]) {
+      changes.push("Мова: " + (rowData[4] || "—") + " → " + payload.language);
+      sheet.getRange(targetRow, 5).setValue(payload.language);
+    }
+    // G (7) - Менеджер
+    if (payload.manager !== undefined && payload.manager !== rowData[6]) {
+      changes.push("Менеджер: " + (rowData[6] || "—") + " → " + payload.manager);
+      sheet.getRange(targetRow, 7).setValue(payload.manager);
+    }
+    // H (8) - Етап
+    if (payload.stage !== undefined && payload.stage !== rowData[7]) {
+      changes.push("Етап: " + (rowData[7] || "—") + " → " + payload.stage);
+      sheet.getRange(targetRow, 8).setValue(payload.stage);
+    }
+    // I (9) - Дата контакту
+    if (payload.nextContact !== undefined && payload.nextContact !== rowData[8]) {
+      changes.push("Дата контакту: " + (rowData[8] || "—") + " → " + payload.nextContact);
+      sheet.getRange(targetRow, 9).setValue(payload.nextContact);
+      // Формули J (днів) і K (статус)
+      sheet.getRange(targetRow, 10).setFormula('=IF(I' + targetRow + '="";"";I' + targetRow + '-TODAY())');
+      sheet.getRange(targetRow, 11).setFormula('=IF(J' + targetRow + '="";"";IF(J' + targetRow + '<0;"ПРОСРОЧЕНО";IF(J' + targetRow + '<=2;"СКОРО";"OK")))');
+    }
+    // L (12) - Бюджет
+    if (payload.budget !== undefined && payload.budget !== rowData[11]) {
+      changes.push("Бюджет: " + (rowData[11] || "—") + " → " + payload.budget);
+      sheet.getRange(targetRow, 12).setValue(payload.budget);
+    }
+    // M (13) - Податкова резиденція
+    if (payload.taxResidency !== undefined && payload.taxResidency !== rowData[12]) {
+      changes.push("Податкова резиденція: " + (rowData[12] || "—") + " → " + payload.taxResidency);
+      sheet.getRange(targetRow, 13).setValue(payload.taxResidency);
+    }
+    // N (14) - Дохід
+    if (payload.income !== undefined && payload.income !== rowData[13]) {
+      changes.push("Дохід: " + (rowData[13] || "—") + " → " + payload.income);
+      sheet.getRange(targetRow, 14).setValue(payload.income);
+    }
+    // O (15) - Країна доходу
+    if (payload.incomeCountry !== undefined && payload.incomeCountry !== rowData[14]) {
+      changes.push("Країна доходу: " + (rowData[14] || "—") + " → " + payload.incomeCountry);
+      sheet.getRange(targetRow, 15).setValue(payload.incomeCountry);
+    }
+    // P (16) - Коли планує
+    if (payload.whenPlans !== undefined && payload.whenPlans !== rowData[15]) {
+      changes.push("Коли планує: " + (rowData[15] || "—") + " → " + payload.whenPlans);
+      sheet.getRange(targetRow, 16).setValue(payload.whenPlans);
+    }
+    // Q (17) - К-сть дорослих
+    if (payload.adults !== undefined && payload.adults !== rowData[16]) {
+      changes.push("Дорослих: " + (rowData[16] || "—") + " → " + payload.adults);
+      sheet.getRange(targetRow, 17).setValue(payload.adults);
+    }
+    // R (18) - К-сть дітей
+    if (payload.children !== undefined && payload.children !== rowData[17]) {
+      changes.push("Дітей: " + (rowData[17] || "—") + " → " + payload.children);
+      sheet.getRange(targetRow, 18).setValue(payload.children);
+    }
+    // S (19) - Коментар
+    if (payload.comment !== undefined && payload.comment !== rowData[18]) {
+      changes.push("Коментар: " + (rowData[18] || "—") + " → " + payload.comment);
+      sheet.getRange(targetRow, 19).setValue(payload.comment);
+    }
+  } else {
+    // ⭐ НЕРУХОМІСТЬ — оригінальний маппінг
+    // A (1) - ID
+    if (payload.id && payload.id !== rowData[0]) {
+      changes.push("ID: " + (rowData[0] || "—") + " → " + payload.id);
+      sheet.getRange(targetRow, 1).setValue(payload.id);
+    }
+    // C (3) - Джерело
+    if (payload.source && payload.source !== rowData[2]) {
+      changes.push("Джерело: " + (rowData[2] || "—") + " → " + payload.source);
+      sheet.getRange(targetRow, 3).setValue(payload.source);
+    }
+    // D (4) - Мова
+    if (payload.language && payload.language !== rowData[3]) {
+      changes.push("Мова: " + (rowData[3] || "—") + " → " + payload.language);
+      sheet.getRange(targetRow, 4).setValue(payload.language);
+    }
+    // E (5) - Тип
+    if (payload.type && payload.type !== rowData[4]) {
+      changes.push("Тип: " + (rowData[4] || "—") + " → " + payload.type);
+      sheet.getRange(targetRow, 5).setValue(payload.type);
+    }
+    // F (6) - Менеджер
+    if (payload.manager !== undefined && payload.manager !== rowData[5]) {
+      changes.push("Менеджер: " + (rowData[5] || "—") + " → " + payload.manager);
+      sheet.getRange(targetRow, 6).setValue(payload.manager);
+    }
+    // G (7) - Етап
+    if (payload.stage && payload.stage !== rowData[6]) {
+      changes.push("Етап: " + (rowData[6] || "—") + " → " + payload.stage);
+      sheet.getRange(targetRow, 7).setValue(payload.stage);
+    }
+    // H (8) - Дата контакту
+    if (payload.nextContact !== undefined && payload.nextContact !== rowData[7]) {
+      changes.push("Дата контакту: " + (rowData[7] || "—") + " → " + payload.nextContact);
+      sheet.getRange(targetRow, 8).setValue(payload.nextContact);
+      sheet.getRange(targetRow, 9).setFormula('=IF(H' + targetRow + '="";"";H' + targetRow + '-TODAY())');
+      sheet.getRange(targetRow, 10).setFormula('=IF(I' + targetRow + '="";"";IF(I' + targetRow + '<0;"ПРОСРОЧЕНО";IF(I' + targetRow + '<=2;"СКОРО";"OK")))');
+    }
+    // K (11) - Бюджет
+    if (payload.budget !== undefined && payload.budget !== rowData[10]) {
+      changes.push("Бюджет: " + (rowData[10] || "—") + " → " + payload.budget);
+      sheet.getRange(targetRow, 11).setValue(payload.budget);
+    }
+    // L (12) - Район
+    if (payload.district !== undefined && payload.district !== rowData[11]) {
+      changes.push("Район: " + (rowData[11] || "—") + " → " + payload.district);
+      sheet.getRange(targetRow, 12).setValue(payload.district);
+    }
+    // M (13) - Мета/Тип
+    if (payload.metaType !== undefined && payload.metaType !== rowData[12]) {
+      changes.push("Мета/Тип: " + (rowData[12] || "—") + " → " + payload.metaType);
+      sheet.getRange(targetRow, 13).setValue(payload.metaType);
+    }
+    // N (14) - Площа
+    if (payload.area !== undefined && payload.area !== rowData[13]) {
+      changes.push("Площа: " + (rowData[13] || "—") + " → " + payload.area);
+      sheet.getRange(targetRow, 14).setValue(payload.area);
+    }
+    // O (15) - Кімнати
+    if (payload.rooms !== undefined && payload.rooms !== rowData[14]) {
+      changes.push("Кімнати: " + (rowData[14] || "—") + " → " + payload.rooms);
+      sheet.getRange(targetRow, 15).setValue(payload.rooms);
+    }
+    // P (16) - Next Action
+    if (payload.nextAction !== undefined && payload.nextAction !== rowData[15]) {
+      changes.push("Next Action: " + (rowData[15] || "—") + " → " + payload.nextAction);
+      sheet.getRange(targetRow, 16).setValue(payload.nextAction);
+    }
+    // Q (17) - Коментар
+    if (payload.comment !== undefined && payload.comment !== rowData[16]) {
+      changes.push("Коментар: " + (rowData[16] || "—") + " → " + payload.comment);
+      sheet.getRange(targetRow, 17).setValue(payload.comment);
+    }
+    // S (19) - ПІБ
+    if (payload.fullName !== undefined && payload.fullName !== rowData[18]) {
+      changes.push("ПІБ: " + (rowData[18] || "—") + " → " + payload.fullName);
+      sheet.getRange(targetRow, 19).setValue(payload.fullName);
+    }
   }
-  
-  // B (2) - Телефон (не оновлюємо якщо використовується для ідентифікації)
-  
-  // C (3) - Джерело
-  if (payload.source && payload.source !== rowData[2]) {
-    changes.push("Джерело: " + (rowData[2] || "—") + " → " + payload.source);
-    sheet.getRange(targetRow, 3).setValue(payload.source);
-  }
-  
-  // D (4) - Мова
-  if (payload.language && payload.language !== rowData[3]) {
-    changes.push("Мова: " + (rowData[3] || "—") + " → " + payload.language);
-    sheet.getRange(targetRow, 4).setValue(payload.language);
-  }
-  
-  // E (5) - Тип (Купівля/Продаж)
-  if (payload.type && payload.type !== rowData[4]) {
-    changes.push("Тип: " + (rowData[4] || "—") + " → " + payload.type);
-    sheet.getRange(targetRow, 5).setValue(payload.type);
-  }
-  
-  // F (6) - Менеджер
-  if (payload.manager !== undefined && payload.manager !== rowData[5]) {
-    changes.push("Менеджер: " + (rowData[5] || "—") + " → " + payload.manager);
-    sheet.getRange(targetRow, 6).setValue(payload.manager);
-  }
-  
-  // G (7) - Етап
-  if (payload.stage && payload.stage !== rowData[6]) {
-    changes.push("Етап: " + (rowData[6] || "—") + " → " + payload.stage);
-    sheet.getRange(targetRow, 7).setValue(payload.stage);
-  }
-  
-  // H (8) - Дата контакту
-  if (payload.nextContact !== undefined && payload.nextContact !== rowData[7]) {
-    changes.push("Дата контакту: " + (rowData[7] || "—") + " → " + payload.nextContact);
-    sheet.getRange(targetRow, 8).setValue(payload.nextContact);
-    // Пересчитаю I і J автоматично
-    sheet.getRange(targetRow, 9).setFormula('=IF(H' + targetRow + '="";"";H' + targetRow + '-TODAY())');
-    sheet.getRange(targetRow, 10).setFormula('=IF(I' + targetRow + '="";"";IF(I' + targetRow + '<0;"ПРОСРОЧЕНО";IF(I' + targetRow + '<=2;"СКОРО";"OK")))');
-  }
-  
-  // K (11) - Бюджет
-  if (payload.budget !== undefined && payload.budget !== rowData[10]) {
-    changes.push("Бюджет: " + (rowData[10] || "—") + " → " + payload.budget);
-    sheet.getRange(targetRow, 11).setValue(payload.budget);
-  }
-  
-  // L (12) - Район
-  if (payload.district !== undefined && payload.district !== rowData[11]) {
-    changes.push("Район: " + (rowData[11] || "—") + " → " + payload.district);
-    sheet.getRange(targetRow, 12).setValue(payload.district);
-  }
-  
-  // M (13) - Мета/Тип
-  if (payload.metaType !== undefined && payload.metaType !== rowData[12]) {
-    changes.push("Мета/Тип: " + (rowData[12] || "—") + " → " + payload.metaType);
-    sheet.getRange(targetRow, 13).setValue(payload.metaType);
-  }
-  
-  // N (14) - Площа
-  if (payload.area !== undefined && payload.area !== rowData[13]) {
-    changes.push("Площа: " + (rowData[13] || "—") + " → " + payload.area);
-    sheet.getRange(targetRow, 14).setValue(payload.area);
-  }
-  
-  // O (15) - Кімнати
-  if (payload.rooms !== undefined && payload.rooms !== rowData[14]) {
-    changes.push("Кімнати: " + (rowData[14] || "—") + " → " + payload.rooms);
-    sheet.getRange(targetRow, 15).setValue(payload.rooms);
-  }
-  
-  // P (16) - Next Action
-  if (payload.nextAction !== undefined && payload.nextAction !== rowData[15]) {
-    changes.push("Next Action: " + (rowData[15] || "—") + " → " + payload.nextAction);
-    sheet.getRange(targetRow, 16).setValue(payload.nextAction);
-  }
-  
-  // Q (17) - Коментар
-  if (payload.comment !== undefined && payload.comment !== rowData[16]) {
-    changes.push("Коментар: " + (rowData[16] || "—") + " → " + payload.comment);
-    sheet.getRange(targetRow, 17).setValue(payload.comment);
-  }
-  
-  // S (19) - ПІБ
-  if (payload.fullName !== undefined && payload.fullName !== rowData[18]) {
-    changes.push("ПІБ: " + (rowData[18] || "—") + " → " + payload.fullName);
-    sheet.getRange(targetRow, 19).setValue(payload.fullName);
-  }
-  
-  // Логірування всіх змін
+
   if (changes.length > 0) {
     const detailedLog = changes.join(" | ");
     logOperation("Редагував ліда", leadId, userEmail, detailedLog);
-    
-    // Форматування для статусу
-    addConditionalFormattingForStatusText();
-    
+
+    if (!isMortgage) addConditionalFormattingForStatusText();
+
     return { success: true, message: "Редаговано " + changes.length + " полей", changes: changes, rowIndex: targetRow };
   } else {
     return { success: true, message: "Немає змін", rowIndex: targetRow };
@@ -1085,8 +1208,8 @@ function getUserByEmail(email) {
   return null;
 }
 
-function getNextLeadNumber(managerName) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.propertySheet);
+function getNextLeadNumber(managerName, sheetName) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName || SHEET_PROPERTIES.propertySheet);
   const data = sheet.getRange("A:A").getValues();
   let maxNum = 0;
 
@@ -1124,6 +1247,40 @@ function buildLeadObject(row, rowIndex) {
     fullName: row[18],     // S - ПІБ
     deletedStatus: row[19], // T - Статус (ВИДАЛЕНО)
     rowIndex: rowIndex     // ⭐ Номер рядка в таблиці (унікальний!)
+  };
+}
+
+// ================================
+// ПОБУДОВА ОБ'ЄКТА ЛІДА ІПОТЕКИ (інший маппінг колонок)
+// A=ID, B=ПІБ, C=Телефон, D=Джерело, E=Мова, F=Тип, G=Менеджер, H=Етап,
+// I=Дата контакту, J=Днів, K=Прострочено, L=Бюджет, M=Податкова резиденція,
+// N=Дохід, O=Країна доходу, P=Коли планує, Q=Дорослих, R=Дітей, S=Коментар, T=Дата додавання, U=ВИДАЛЕНО
+// ================================
+
+function buildMortgageLeadObject(row, rowIndex) {
+  return {
+    id: row[0],             // A
+    fullName: row[1],       // B - ПІБ
+    phone: row[2],          // C - Телефон
+    source: row[3],         // D - Джерело
+    language: row[4],       // E - Мова
+    type: row[5],           // F - Тип
+    manager: row[6],        // G - Менеджер
+    stage: row[7],          // H - Етап
+    nextContact: safeDateStr(row[8]),  // I - Дата контакту
+    daysLeft: row[9],       // J - Днів (формула)
+    status: row[10],        // K - Прострочено (формула)
+    budget: row[11],        // L - Бюджет
+    taxResidency: row[12],  // M - Податкова резиденція
+    income: row[13],        // N - Дохід
+    incomeCountry: row[14], // O - Країна доходу
+    whenPlans: row[15],     // P - Коли планує
+    adults: row[16],        // Q - К-сть дорослих
+    children: row[17],      // R - К-сть дітей
+    comment: row[18],       // S - Коментар
+    dateAdded: safeDateStr(row[19]),   // T - Дата додавання
+    deletedStatus: row[20], // U - ВИДАЛЕНО
+    rowIndex: rowIndex
   };
 }
 

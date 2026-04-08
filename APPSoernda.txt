@@ -374,33 +374,40 @@ function addLead(payload) {
 
 function softDeleteLead(leadId, rowIndex) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.leadsSheet);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_PROPERTIES.leadsSheet);
+    const archiveSheet = ss.getSheetByName("Оренда Архів");
     const userEmail = Session.getActiveUser().getEmail() || "admin@system";
-    
+
+    if (!archiveSheet) {
+      return { success: false, error: "Аркуш 'Оренда Архів' не знайдено" };
+    }
+
+    // Знаходимо рядок по ID (rowIndex ненадійний після deleteRow)
     let targetRow = null;
-    
-    if (rowIndex && rowIndex > 1) {
-      targetRow = rowIndex;
-    } else {
-      const data = sheet.getRange("A:A").getValues();
-      for (let i = 1; i < data.length; i++) {
-        if (data[i][0] === leadId) {
-          targetRow = i + 1;
-          break;
-        }
+    const data = sheet.getRange("A:A").getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == leadId) {
+        targetRow = i + 1;
+        break;
       }
     }
-    
+
     if (!targetRow) {
       return { success: false, error: "Ліда не знайдено" };
     }
-    
-    // W = колонка 23 — записуємо ВИДАЛЕНО
-    sheet.getRange(targetRow, 23).setValue("ВИДАЛЕНО");
-    
-    logOperation("Видалив ліда (soft)", leadId, userEmail, "Позначено як ВИДАЛЕНО");
-    
-    return { success: true, message: "Ліда позначено як видалено" };
+
+    // Копіюємо рядок в архів (A-W, 23 колонки)
+    const rowData = sheet.getRange(targetRow, 1, 1, 23).getValues()[0];
+    const archiveNextRow = archiveSheet.getLastRow() + 1;
+    archiveSheet.getRange(archiveNextRow, 1, 1, 23).setValues([rowData]);
+
+    // Видаляємо рядок з основного аркуша
+    sheet.deleteRow(targetRow);
+
+    logOperation("Архівував ліда", leadId, userEmail, "Перенесено в Оренда Архів");
+
+    return { success: true, message: "Ліда архівовано" };
   } catch (error) {
     debugLog("softDeleteLead ERROR: " + error.toString());
     return { success: false, error: "Помилка softDeleteLead: " + error.toString() };

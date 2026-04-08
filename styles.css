@@ -1527,10 +1527,10 @@
                 background: rgba(255,255,255,0.18) !important;
                 border: 1.5px solid rgba(255,255,255,0.5) !important;
                 backdrop-filter: blur(4px);
-                font-size: 0.72rem;
-                min-width: 80px;
-                padding: 0.35rem 0.6rem !important;
-                border-radius: 6px !important;
+                font-size: 0.75rem;
+                min-width: 88px;
+                padding: 0.4rem 0.7rem !important;
+                border-radius: 7px !important;
                 text-align: center;
                 flex-shrink: 0;
             }
@@ -1539,30 +1539,47 @@
                 border-color: white !important;
                 box-shadow: 0 0 8px rgba(255,255,255,0.3);
             }
-            .rent-pill {
-                min-width: 80px;
+            .type-pill-primary {
+                font-weight: 700 !important;
+                border-width: 2px !important;
             }
-            .rent-pill .dropdown-arrow {
-                display: none;
-            }
-            .rent-dropdown {
-                display: flex !important;
+            .pill-divider {
+                height: 18px;
+                margin: 0 0.1rem;
             }
 
-            /* Оренда dropdown: фіксований, справа */
-            .rent-dropdown-menu {
-                position: fixed !important;
-                top: auto !important;
-                right: 1rem !important;
-                left: auto !important;
-                transform: none !important;
-                z-index: 2000 !important;
-                min-width: 200px;
-                border-radius: 12px;
+            /* Великі кнопки оренди на мобілці */
+            .rent-type-grid {
+                gap: 0.4rem;
+                padding: 0.4rem 0;
             }
-            .rent-option {
-                font-size: 0.9rem !important;
-                padding: 12px 18px !important;
+            .rent-type-btn {
+                min-width: 60px;
+                padding: 0.5rem 0.5rem;
+                border-radius: 10px;
+            }
+            .rent-type-icon {
+                font-size: 1.1rem;
+            }
+            .rent-type-label {
+                font-size: 0.65rem;
+            }
+
+            /* Великі кнопки оренди на мобілці */
+            .rent-type-grid {
+                gap: 0.4rem;
+                padding: 0.4rem 0;
+            }
+            .rent-type-btn {
+                min-width: 70px;
+                padding: 0.5rem 0.6rem;
+                border-radius: 10px;
+            }
+            .rent-type-icon {
+                font-size: 1.1rem;
+            }
+            .rent-type-label {
+                font-size: 0.7rem;
             }
 
             /* --- КОНТЕЙНЕР --- */
@@ -1860,7 +1877,8 @@
                 grid-template-columns: 1fr !important;
             }
 
-            .rent-dropdown-menu { min-width: 140px; }
+            /* rent-type-btn на дуже малих екранах */
+            .rent-type-btn { min-width: 55px; padding: 0.4rem 0.3rem; }
 
             .mobile-fab {
                 bottom: 1rem;
@@ -2031,6 +2049,21 @@
             color: var(--text-primary);
         }
 
+        body.dark-mode .rent-type-btn {
+            background: var(--bg-tertiary);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+        body.dark-mode .rent-type-btn:hover {
+            border-color: #5B8BD4;
+            background: #2A3F5F;
+        }
+        body.dark-mode .rent-type-btn.active {
+            border-color: #5B8BD4;
+            background: linear-gradient(135deg, #2A3F5F, #3D5A80);
+            color: white;
+        }
+
         body.dark-mode .modal {
             background: rgba(0, 0, 0, 0.7);
         }
@@ -2077,95 +2110,98 @@
         .dashboard-type-pills {
             display: flex;
             gap: 0.5rem;
-            margin-left: 8rem;
-            margin-right: auto;
+            margin: 0 auto;
             align-items: center;
         }
 
         .type-pill {
             background: transparent;
             color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
+            border: 1.5px solid rgba(255,255,255,0.35);
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
+            min-width: 100px;
+            text-align: center;
         }
 
         .type-pill:hover {
             border-color: white;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.12);
         }
 
         .type-pill.active {
             background: rgba(255,255,255,0.3);
             border-color: white;
         }
-        
-        /* ⭐ DROPDOWN ОРЕНДА */
-        .rent-dropdown {
-            position: relative;
-            display: inline-block;
+
+        /* Головні кнопки (Купівля, Продаж) — жирніші */
+        .type-pill-primary {
+            border-width: 2px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0.55rem 1.4rem;
         }
-        
-        .rent-pill .dropdown-arrow {
-            font-size: 0.6rem;
-            margin-left: 4px;
-            transition: transform 0.2s;
-        }
-        
-        .rent-dropdown.open .dropdown-arrow {
-            transform: rotate(180deg);
-        }
-        
-        .rent-dropdown-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #1F4E78 0%, #2d6a9f 100%);
-            border-radius: 12px;
-            padding: 8px;
-            margin-top: 8px;
-            min-width: 160px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            z-index: 1000;
-            animation: dropdownSlide 0.2s ease;
-        }
-        
-        @keyframes dropdownSlide {
-            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        
-        .rent-dropdown.open .rent-dropdown-menu {
-            display: block;
-        }
-        
-        .rent-option {
-            display: block;
-            width: 100%;
-            padding: 10px 16px;
-            background: transparent;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s;
-        }
-        
-        .rent-option:hover {
-            background: rgba(255,255,255,0.2);
-        }
-        
-        .rent-option.active {
+
+        /* Роздільник між групами кнопок */
+        .pill-divider {
+            width: 1px;
+            height: 22px;
             background: rgba(255,255,255,0.3);
+            margin: 0 0.3rem;
+        }
+
+        /* ===== ВЕЛИКІ КНОПКИ ТИПУ ОРЕНДИ ===== */
+        .rent-type-grid {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 0.5rem 0;
+        }
+
+        .rent-type-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+            padding: 0.7rem 1.2rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 100px;
+            flex: 1;
+            max-width: 180px;
+        }
+
+        .rent-type-btn:hover {
+            border-color: #4472C4;
+            background: #f0f5ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(68, 114, 196, 0.15);
+        }
+
+        .rent-type-btn.active {
+            border-color: #4472C4;
+            background: linear-gradient(135deg, #4472C4, #2B5797);
+            color: white;
+            box-shadow: 0 4px 14px rgba(68, 114, 196, 0.3);
+        }
+
+        .rent-type-icon {
+            font-size: 1.4rem;
+        }
+
+        .rent-type-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         /* Таблиця при згорнутому дашборді */

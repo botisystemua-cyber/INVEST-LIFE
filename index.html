@@ -211,23 +211,16 @@
 
     <!-- Кнопки типів дашборду -->
     <div class="dashboard-type-pills">
-        <!-- НЕРУХОМІСТЬ -->
-        <button class="type-pill active" onclick="selectDashboardType('Купівля')" id="pill-Купівля">🏡 Купівля</button>
-        <button class="type-pill" onclick="selectDashboardType('Продаж')" id="pill-Продаж">🏠 Продаж</button>
-        
-        <!-- КОНСУЛЬТАЦІЯ -->
+        <!-- ГОЛОВНІ (виділені) -->
+        <button class="type-pill type-pill-primary active" onclick="selectDashboardType('Купівля')" id="pill-Купівля">🏡 Купівля</button>
+        <button class="type-pill type-pill-primary" onclick="selectDashboardType('Продаж')" id="pill-Продаж">🏠 Продаж</button>
+        <button class="type-pill type-pill-primary" onclick="selectDashboardType('Оренда')" id="pill-Оренда">🏨 Оренда</button>
+
+        <span class="pill-divider"></span>
+
+        <!-- ДРУГОРЯДНІ -->
         <button class="type-pill" onclick="selectDashboardType('Консультація')" id="pill-Консультація">💬 Консультація</button>
-        
-        <!-- ОРЕНДА (dropdown) -->
-        <div class="rent-dropdown" id="rentDropdown">
-            <button class="type-pill rent-pill" onclick="toggleRentDropdown()" id="pill-Оренда">🏨 Оренда<span class="dropdown-arrow"> ▼</span></button>
-            <div class="rent-dropdown-menu" id="rentDropdownMenu">
-                <button class="rent-option" onclick="selectDashboardType('Подобова')">🌙 Подобова</button>
-                <button class="rent-option" onclick="selectDashboardType('Сезонна')">☀️ Сезонна</button>
-                <button class="rent-option" onclick="selectDashboardType('Довгострокова')">📅 Довгострокова</button>
-                <button class="rent-option" onclick="selectDashboardType('Управління')">🔑 Управління</button>
-            </div>
-        </div>
+        <button class="type-pill" onclick="selectDashboardType('Іпотека')" id="pill-Іпотека">🏦 Іпотека</button>
     </div>
 
     <!-- Dark mode toggle -->
@@ -271,34 +264,31 @@
 
     </section>
 
-    <!-- ===== МЕНЕДЖЕРИ (окрема розгортка) ===== -->
-    <section id="managersSection">
-        <div class="dashboard-header">
-            <h2 class="section-title" id="managersTitle">👥 Менеджери</h2>
-            <button class="toggle-btn" id="toggleManagers" onclick="toggleManagers()" title="Згорнути/Розгорнути">+</button>
+    <!-- ===== КНОПКИ ТИПУ ОРЕНДИ (показуються тільки коли обрано Оренда) ===== -->
+    <div id="rentTypeButtons" style="display: none;">
+        <div class="rent-type-grid">
+            <button class="rent-type-btn active" onclick="selectRentSubtype('Всі')" id="rentBtn-Всі">
+                <span class="rent-type-icon">📋</span>
+                <span class="rent-type-label">Всі</span>
+            </button>
+            <button class="rent-type-btn" onclick="selectRentSubtype('Подобова')" id="rentBtn-Подобова">
+                <span class="rent-type-icon">🌙</span>
+                <span class="rent-type-label">Подобова</span>
+            </button>
+            <button class="rent-type-btn" onclick="selectRentSubtype('Сезонна')" id="rentBtn-Сезонна">
+                <span class="rent-type-icon">☀️</span>
+                <span class="rent-type-label">Сезонна</span>
+            </button>
+            <button class="rent-type-btn" onclick="selectRentSubtype('Довгострокова')" id="rentBtn-Довгострокова">
+                <span class="rent-type-icon">📅</span>
+                <span class="rent-type-label">Довгострокова</span>
+            </button>
+            <button class="rent-type-btn" onclick="selectRentSubtype('Управління')" id="rentBtn-Управління">
+                <span class="rent-type-icon">🔑</span>
+                <span class="rent-type-label">Управління</span>
+            </button>
         </div>
-        <div id="managersContent" style="display: none;">
-            <div id="managerFiltersContainer" style="
-                background: #f5f5f5;
-                padding: 1rem;
-                border-radius: 8px;
-                margin: 0.5rem 0 1rem 0;
-                display: flex;
-                gap: 1rem;
-                flex-wrap: wrap;
-                align-items: center;
-                border-left: 4px solid #4472C4;
-            ">
-                <span style="font-weight: bold; color: #1F4E78; font-size: 0.9rem;">👥 Менеджери:</span>
-                <div id="managerCheckboxes" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <div style="color: #999;">⏳ Завантажаю...</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ===== РОЗДІЛЬНИК ===== -->
-    <hr style="border: none; border-top: 3px solid var(--primary); margin: 1.2rem 0; opacity: 0.25;">
+    </div>
 
     <!-- ===== АДМІН ПАНЕЛЬ ===== -->
 
@@ -1511,6 +1501,185 @@
 
             <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 1rem;">💾 Додати ліда</button>
             <button type="button" class="btn btn-danger" onclick="closeAddLeadSidebar()" style="width: 100%; margin-top: 0.5rem;">Скасувати</button>
+        </form>
+    </div>
+</div>
+
+<!-- ===== МОДАЛКА КОЛОНОК ІПОТЕКИ ===== -->
+<div class="modal" id="columnSettingsMortgageModal">
+    <div class="modal-content" style="min-width: 350px;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);">
+            <h3 class="modal-title" style="color: white;">🏦 Колони Іпотеки</h3>
+            <button class="close-btn" onclick="closeModal('columnSettingsMortgageModal')" style="color: white;">&times;</button>
+        </div>
+        <div style="padding: 20px; max-height: 500px; overflow-y: auto;">
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Основні колонки таблиці (деталі розгортаються окремо)</p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-id" checked onchange="toggleMortgageColumn('id')"><span style="margin-left: 10px;">📌 ID</span></label>
+                <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-fullName" checked onchange="toggleMortgageColumn('fullName')"><span style="margin-left: 10px;">🧑 ПІБ</span></label>
+                <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-phone" checked onchange="toggleMortgageColumn('phone')"><span style="margin-left: 10px;">📱 Телефон</span></label>
+                <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-manager" checked onchange="toggleMortgageColumn('manager')"><span style="margin-left: 10px;">👤 Менеджер</span></label>
+                <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-stage" checked onchange="toggleMortgageColumn('stage')"><span style="margin-left: 10px;">📊 Етап</span></label>
+                <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-nextContact" checked onchange="toggleMortgageColumn('nextContact')"><span style="margin-left: 10px;">📅 Наступний контакт</span></label>
+                <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-daysLeft" checked onchange="toggleMortgageColumn('daysLeft')"><span style="margin-left: 10px;">⏰ Днів залишилось</span></label>
+                <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-status" checked onchange="toggleMortgageColumn('status')"><span style="margin-left: 10px;">✅ Статус</span></label>
+            </div>
+            <hr style="margin: 15px 0; border: none; border-top: 1px solid #eee;">
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">📋 Деталі (в розгортці):</p>
+            <p style="font-size: 0.8rem; color: #999;">🔗 Джерело, 🌐 Мова, 💰 Бюджет, 🏛 Податкова резиденція, 💵 Дохід, 🌍 Країна доходу, 📆 Коли планує, 👨‍👩‍👧 Дорослих, 👶 Дітей, 💬 Коментар, 📆 Дата додавання</p>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 20px; background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);" onclick="closeModal('columnSettingsMortgageModal')">✅ Готово</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== САЙДБАР РЕДАГУВАННЯ ІПОТЕКИ ===== -->
+<div id="editSidebarMortgage" style="
+    position: fixed; right: 0; top: 0; width: 380px; height: 100vh;
+    background: white; box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+    z-index: 999; overflow-y: auto; transform: translateX(100%);
+    transition: transform 0.3s ease; padding: 0; border-left: 3px solid #8B5CF6;
+">
+    <div style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color: white; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;">
+        <h2 style="margin: 0; font-size: 1.2rem;">✏️ Редагування (Іпотека)</h2>
+        <button onclick="closeMortgageSidebar()" style="background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+    <form id="editSidebarMortgageForm" onsubmit="handleSidebarEditMortgage(event)" style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+        <input type="hidden" id="mortLeadId">
+        <input type="hidden" id="mortRowIndex">
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">📱 ID / Телефон</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                <input type="text" id="mortLeadId_display" readonly style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; background: #f5f5f5;">
+                <input type="tel" id="mortPhone" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem;">
+            </div>
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">🧑 ПІБ</label>
+            <input type="text" id="mortFullName" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">🔗 Джерело</label>
+            <input type="text" id="mortSource" list="mortSourceList" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+            <datalist id="mortSourceList"><option value="Telegram"><option value="WhatsApp"><option value="Viber"><option value="Instagram"><option value="Facebook"><option value="Сайт"><option value="Телефон"><option value="Інше"></datalist>
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">🌐 Мова</label>
+            <select id="mortLanguage" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+                <option value="">-- Виберіть --</option>
+                <option value="Українська">Українська</option>
+                <option value="Російська">Російська</option>
+                <option value="Англійська">Англійська</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">👤 Менеджер</label>
+            <select id="mortManager" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+                <option value="Не назначено">❌ Не назначено</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">🎯 Етап</label>
+            <select id="mortStage" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+                <option value="Етап_1_Контакт">1️⃣ Контакт</option>
+                <option value="Етап_2_Кваліфікація">2️⃣ Кваліфікація</option>
+                <option value="Етап_3_Подача_в_банк">3️⃣ Подача в банк</option>
+                <option value="Етап_4_Схвалення_ліміту">4️⃣ Схвалення ліміту</option>
+                <option value="Етап_5_Підбір">5️⃣ Підбір</option>
+                <option value="Етап_6_Оцінка_об'єкта">6️⃣ Оцінка об'єкта</option>
+                <option value="Етап_7_FIPER">7️⃣ FIPER</option>
+                <option value="Етап_8_Нотаріус">8️⃣ Нотаріус</option>
+                <option value="Етап_9_Після">9️⃣ Після</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">📅 Наступний контакт</label>
+            <input type="date" id="mortNextContact" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">💰 Бюджет</label>
+            <input type="text" id="mortBudget" list="mortBudgetList" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+            <datalist id="mortBudgetList"><option value="до 100k€"><option value="100k - 200k€"><option value="200k - 300k€"><option value="300k - 500k€"><option value="500k+€"></datalist>
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">🏛 Податкова резиденція</label>
+            <input type="text" id="mortTaxResidency" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">💵 Дохід</label>
+            <input type="text" id="mortIncome" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">🌍 Країна доходу</label>
+            <input type="text" id="mortIncomeCountry" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">📆 Коли планує</label>
+            <input type="text" id="mortWhenPlans" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <div>
+                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">👨‍👩‍👧 Дорослих</label>
+                <input type="text" id="mortAdults" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+            </div>
+            <div>
+                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">👶 Дітей</label>
+                <input type="text" id="mortChildren" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+            </div>
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">💬 Коментар</label>
+            <textarea id="mortComment" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; min-height: 80px;"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 0.5rem; background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); border: none;">💾 Зберегти</button>
+        <button type="button" class="btn btn-danger" onclick="closeMortgageSidebar()" style="width: 100%; margin-top: 0.3rem;">Скасувати</button>
+    </form>
+</div>
+
+<!-- ===== САЙДБАР ДОДАВАННЯ ІПОТЕКИ ===== -->
+<div id="addMortgageLeadSidebar" style="
+    position: fixed; right: 0; top: 0; width: 380px; height: 100vh;
+    background: white; box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+    z-index: 998; overflow-y: auto; transform: translateX(100%);
+    transition: transform 0.3s ease; padding: 0; border-left: 3px solid #8B5CF6;
+">
+    <div style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color: white; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;">
+        <h2 style="margin: 0; font-size: 1.2rem;">➕ Новий лід (Іпотека)</h2>
+        <button onclick="closeAddMortgageLeadSidebar()" style="background: transparent; border: none; color: white; font-size: 1.8rem; cursor: pointer; padding: 0;">✕</button>
+    </div>
+    <div style="padding: 1.5rem;">
+        <form onsubmit="handleAddMortgageLead(event)">
+            <div class="form-group"><label class="form-label">🧑 ПІБ *</label><input type="text" class="form-input" id="addMortFullName" required></div>
+            <div class="form-group"><label class="form-label">📱 Телефон *</label><input type="tel" class="form-input" id="addMortPhone" required></div>
+            <div class="form-group"><label class="form-label">🔗 Джерело</label><input type="text" class="form-input" id="addMortSource" list="addMortSourceList"><datalist id="addMortSourceList"><option value="Telegram"><option value="WhatsApp"><option value="Viber"><option value="Instagram"><option value="Facebook"><option value="Сайт"><option value="Телефон"><option value="Інше"></datalist></div>
+            <div class="form-group"><label class="form-label">🌐 Мова</label><select class="form-select" id="addMortLanguage"><option value="">--</option><option value="Українська">Українська</option><option value="Російська">Російська</option><option value="Англійська">Англійська</option></select></div>
+            <div class="form-group"><label class="form-label">👤 Менеджер *</label><select class="form-select" id="addMortManager" required><option value="">-- Вибери менеджера --</option></select></div>
+            <div class="form-group"><label class="form-label">💰 Бюджет</label><input type="text" class="form-input" id="addMortBudget" list="addMortBudgetList"><datalist id="addMortBudgetList"><option value="до 100k€"><option value="100k - 200k€"><option value="200k - 300k€"><option value="300k - 500k€"><option value="500k+€"></datalist></div>
+            <div class="form-group"><label class="form-label">🏛 Податкова резиденція</label><input type="text" class="form-input" id="addMortTaxResidency"></div>
+            <div class="form-group"><label class="form-label">💵 Дохід</label><input type="text" class="form-input" id="addMortIncome"></div>
+            <div class="form-group"><label class="form-label">🌍 Країна доходу</label><input type="text" class="form-input" id="addMortIncomeCountry"></div>
+            <div class="form-group"><label class="form-label">📆 Коли планує</label><input type="text" class="form-input" id="addMortWhenPlans"></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                <div class="form-group"><label class="form-label">👨‍👩‍👧 Дорослих</label><input type="text" class="form-input" id="addMortAdults"></div>
+                <div class="form-group"><label class="form-label">👶 Дітей</label><input type="text" class="form-input" id="addMortChildren"></div>
+            </div>
+            <div class="form-group"><label class="form-label">💬 Коментар</label><textarea class="form-input" id="addMortComment" style="min-height: 80px;"></textarea></div>
+            <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 1rem; background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); border: none;">💾 Додати ліда</button>
+            <button type="button" class="btn btn-danger" onclick="closeAddMortgageLeadSidebar()" style="width: 100%; margin-top: 0.5rem;">Скасувати</button>
         </form>
     </div>
 </div>
