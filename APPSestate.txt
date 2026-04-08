@@ -291,6 +291,9 @@ function doPost(e) {
       case 'deleteUser':
         response = deleteUser(params.payload.email);
         break;
+      case 'updateUser':
+        response = updateUser(params.payload.email, params.payload);
+        break;
       case 'getAllUsers':
         response = getAllUsers();
         break;
@@ -462,13 +465,38 @@ function deleteUser(email) {
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === email) {
       sheet.deleteRow(i + 1);
-      logOperation("Видалив користувача", "", 
+      logOperation("Видалив користувача", "",
         Session.getActiveUser().getEmail() || "admin@system", email);
       return { success: true };
     }
   }
 
   return { success: false, error: "Користувач не знайдено" };
+}
+
+function updateUser(email, payload) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PROPERTIES.usersSheet);
+    const data = sheet.getRange("A:E").getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === email) {
+        if (payload.name) sheet.getRange(i + 1, 3).setValue(payload.name);
+        if (payload.role) sheet.getRange(i + 1, 2).setValue(payload.role);
+        if (payload.status) sheet.getRange(i + 1, 4).setValue(payload.status);
+        if (payload.password) sheet.getRange(i + 1, 5).setValue(payload.password);
+
+        logOperation("Оновив користувача", "",
+          Session.getActiveUser().getEmail() || "admin@system",
+          email + (payload.role ? " -> " + payload.role : ""));
+        return { success: true, message: "Користувач оновлено" };
+      }
+    }
+
+    return { success: false, error: "Користувач не знайдено" };
+  } catch (error) {
+    return { success: false, error: "Помилка updateUser: " + error.toString() };
+  }
 }
 
 function getAllUsers() {

@@ -3633,7 +3633,31 @@
         const managers = result.users.filter(u => u.role === 'Manager' || u.role === 'Admin');
         
         if (managers.length > 0) {
-          listContainer.innerHTML = managers.map(m => `
+          const currentUserEmail = localStorage.getItem('user_email') || '';
+          listContainer.innerHTML = managers.map(m => {
+            const isSelf = m.email === currentUserEmail;
+            const nextRole = m.role === 'Admin' ? 'Manager' : 'Admin';
+            const roleBtnLabel = m.role === 'Admin' ? '⬇️ В Менеджери' : '⬆️ В Адміни';
+            const roleBtn = isSelf
+              ? `<button disabled title="Не можна змінити роль самому собі" style="
+                  background: #ccc;
+                  color: #fff;
+                  border: none;
+                  padding: 0.5rem 0.8rem;
+                  border-radius: 4px;
+                  cursor: not-allowed;
+                  font-size: 0.85rem;
+                ">🔒 Це ви</button>`
+              : `<button onclick="changeUserRole('${m.email}', '${m.name.replace(/'/g, "\\'")}', '${nextRole}')" style="
+                  background: #4472C4;
+                  color: white;
+                  border: none;
+                  padding: 0.5rem 0.8rem;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  font-size: 0.85rem;
+                ">${roleBtnLabel}</button>`;
+            return `
             <div style="
               background: #f8f8f8;
               padding: 0.8rem;
@@ -3642,23 +3666,28 @@
               justify-content: space-between;
               align-items: center;
               border-left: 4px solid #4472C4;
+              gap: 0.5rem;
             ">
               <div>
                 <strong>👤 ${m.name}</strong><br>
                 <small style="color: #666;">📧 ${m.email}</small><br>
                 <small style="color: #999;">Роль: ${m.role}</small>
               </div>
-              <button onclick="deleteManager('${m.email}')" style="
-                background: #ff6b6b;
-                color: white;
-                border: none;
-                padding: 0.5rem 0.8rem;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 0.85rem;
-              ">🗑️ Видалити</button>
+              <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end;">
+                ${roleBtn}
+                <button onclick="deleteManager('${m.email}')" style="
+                  background: #ff6b6b;
+                  color: white;
+                  border: none;
+                  padding: 0.5rem 0.8rem;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  font-size: 0.85rem;
+                ">🗑️ Видалити</button>
+              </div>
             </div>
-          `).join('');
+          `;
+          }).join('');
           
           console.log(`✅ Завантажено ${managers.length} менеджерів`);
         } else {
@@ -3729,9 +3758,9 @@
     if (!confirm(`⚠️ Ви впевнені що хочете видалити менеджера?`)) {
       return;
     }
-    
+
     console.log('🗑️ Видаляю менеджера:', email);
-    
+
     fetch(SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({
@@ -3744,6 +3773,49 @@
       if (result.success) {
         alert('✅ Менеджер видален!');
         loadAdminManagersList();
+      } else {
+        alert('❌ Помилка: ' + (result.error || 'Невідома помилка'));
+      }
+    })
+    .catch(e => {
+      console.error('❌ Помилка:', e);
+      alert('❌ Помилка мережі: ' + e.message);
+    });
+  }
+
+  function changeUserRole(email, name, newRole) {
+    // Захист: не дозволяємо змінити роль самому собі
+    const currentUserEmail = localStorage.getItem('user_email') || '';
+    if (email === currentUserEmail) {
+      alert('❌ Не можна змінити роль самому собі!');
+      return;
+    }
+
+    if (newRole !== 'Admin' && newRole !== 'Manager') {
+      alert('❌ Невідома роль: ' + newRole);
+      return;
+    }
+
+    const roleLabel = newRole === 'Admin' ? 'Адміністратор' : 'Менеджер';
+    if (!confirm(`Змінити роль користувача "${name}" на "${roleLabel}"?`)) {
+      return;
+    }
+
+    console.log('🔄 Змінюю роль:', email, '->', newRole);
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'updateUser',
+        payload: { email: email, role: newRole }
+      })
+    })
+    .then(r => r.json())
+    .then(result => {
+      if (result.success) {
+        alert(`✅ Роль змінено на "${roleLabel}"!`);
+        loadAdminManagersList();
+        loadManagers(); // Оновлюю dropdown менеджерів
       } else {
         alert('❌ Помилка: ' + (result.error || 'Невідома помилка'));
       }
