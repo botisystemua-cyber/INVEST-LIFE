@@ -5,8 +5,8 @@
   let leadsCache = [];
   
   // ⭐ API URLs
-  const SCRIPT_URL_REALTY = "https://script.google.com/macros/s/AKfycbwjsPEhcAQgk8kb88G4vUxQFD3xloy-8JPZBPqKujLpHw9nSO08nsUCNfs_yEYa5fgLFw/exec";
-  const SCRIPT_URL_RENT = "https://script.google.com/macros/s/AKfycbxBw_QWtWEcwzYF55-vWXrMyZYoaa7PkCq14zrigNevX4BY4_CaHpkiWi8FFRzIJFo4/exec";
+  const SCRIPT_URL_REALTY = "https://script.google.com/macros/s/AKfycbxeOtwVDlHNEAOM_o5Pi6OCw39UHddOhJOYimgKQo8CZ6t_UxAFjK75wfTxLAaZSF2A9A/exec";
+  const SCRIPT_URL_RENT = "https://script.google.com/macros/s/AKfycbzwCHbMZkXwsCLs1oASQnG1XcpB6ROBN-fh297kns0CYuIrjPXpntbfTTl7ytRYUb_h/exec";
   
   // ⭐ Типи оренди
   const RENT_TYPES = ['Подобова', 'Сезонна', 'Довгострокова', 'Управління'];
