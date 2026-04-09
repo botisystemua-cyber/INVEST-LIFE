@@ -1299,15 +1299,38 @@
 
     const selected = (currentManagerStr || '').split(',').map(s => s.trim()).filter(s => s && s !== 'Не назначено');
 
-    let html = '<div style="border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem; max-height: 150px; overflow-y: auto; background: white;">';
+    let html = '<div id="' + selectId + 'Summary" style="font-size: 0.85rem; color: #4472C4; margin-bottom: 0.3rem; font-weight: bold;">' +
+      (selected.length > 0 ? '✅ Вибрано: ' + selected.join(', ') : '❌ Не вибрано') + '</div>';
+    html += '<div style="border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem; max-height: 150px; overflow-y: auto; background: white;">';
     managersList.forEach(m => {
-      const checked = selected.includes(m) ? 'checked' : '';
-      html += '<label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.2rem; cursor: pointer; font-size: 0.9rem;">' +
-        '<input type="checkbox" class="mgr-multi" value="' + m + '" ' + checked + '>' +
-        '<span>👤 ' + m + '</span></label>';
+      const isChecked = selected.includes(m);
+      const bg = isChecked ? 'background: #e8f0fe;' : '';
+      html += '<label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.3rem; cursor: pointer; font-size: 0.9rem; border-radius: 4px; ' + bg + '" onclick="setTimeout(function(){ updateManagerSummary(\'' + selectId + '\'); }, 50)">' +
+        '<input type="checkbox" class="mgr-multi" value="' + m + '" ' + (isChecked ? 'checked' : '') + ' style="width: 18px; height: 18px; accent-color: #4472C4;">' +
+        '<span>' + (isChecked ? '👤 <b>' + m + '</b>' : '👤 ' + m) + '</span></label>';
     });
     html += '</div>';
     container.innerHTML = html;
+  }
+
+  function updateManagerSummary(selectId) {
+    const container = document.getElementById(selectId + 'Checkboxes');
+    if (!container) return;
+    const checked = container.querySelectorAll('.mgr-multi:checked');
+    const names = Array.from(checked).map(cb => cb.value);
+    const summary = document.getElementById(selectId + 'Summary');
+    if (summary) {
+      summary.innerHTML = names.length > 0 ? '✅ Вибрано: ' + names.join(', ') : '❌ Не вибрано';
+    }
+    // Оновлюю підсвітку
+    container.querySelectorAll('label').forEach(label => {
+      const cb = label.querySelector('.mgr-multi');
+      if (cb) {
+        label.style.background = cb.checked ? '#e8f0fe' : '';
+        const span = label.querySelector('span');
+        if (span) span.innerHTML = cb.checked ? '👤 <b>' + cb.value + '</b>' : '👤 ' + cb.value;
+      }
+    });
   }
 
   function getSelectedManagersValue(selectId) {
