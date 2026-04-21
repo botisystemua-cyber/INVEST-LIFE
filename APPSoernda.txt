@@ -191,7 +191,9 @@ function getLeads(manager, type) {
       
       if (leadType !== type) continue;
       
-      if (leadManager === manager || leadManager == manager) {
+      // Підтримка кількох менеджерів через кому
+      var leadManagers = String(leadManager || '').split(',').map(function(s) { return s.trim(); });
+      if (leadManager === manager || leadManager == manager || leadManagers.indexOf(manager) !== -1) {
         leads.push(buildLeadObject(row, i + 2));
       }
     }
@@ -261,7 +263,9 @@ function getAllLeadsNoFilter(manager, userRole) {
       if (!row || !row[0]) continue;
       
       // Якщо Manager — фільтруємо по менеджеру, якщо Admin — беремо все
-      if (userRole === 'Admin' || row[5] === manager || row[5] == manager) {
+      var cellManager = String(row[5] || '');
+      var cellManagers = cellManager.split(',').map(function(s) { return s.trim(); });
+      if (userRole === 'Admin' || cellManager === manager || cellManager == manager || cellManagers.indexOf(manager) !== -1) {
         leads.push(buildLeadObject(row, i + 2));
       }
     }
