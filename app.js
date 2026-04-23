@@ -1140,7 +1140,7 @@
     document.getElementById('searchInput').value = '';
     
     // Скидаю всі checkboxes (менеджери, етапи, бюджет, статуси, джерела)
-    document.querySelectorAll('.manager-checkbox, .stage-checkbox, .budget-checkbox, .status-checkbox, .source-checkbox').forEach(cb => {
+    document.querySelectorAll('.manager-checkbox, .stage-checkbox, .budget-checkbox, .status-checkbox, .source-checkbox, .leadStatus-checkbox').forEach(cb => {
       cb.checked = false;
     });
     
@@ -1366,7 +1366,10 @@
     
     // ⭐ ЗАПОВНЮЮ СТАТУС З ДАНИХ ЛІДІВ (формула из таблицы)
     document.getElementById('sidebarStatus').value = lead.status || '';
-    
+
+    // ⭐ СТАТУС ЛІДА (колонка U, редагований dropdown)
+    document.getElementById('sidebarLeadStatus').value = lead.leadStatus || 'активний';
+
     document.getElementById('sidebarNextAction').value = lead.nextAction || '';
     document.getElementById('sidebarComment').value = lead.comment || '';
     
@@ -1659,7 +1662,8 @@
       area: document.getElementById('sidebarArea').value,
       rooms: document.getElementById('sidebarRooms').value,
       nextAction: document.getElementById('sidebarNextAction').value,
-      comment: document.getElementById('sidebarComment').value
+      comment: document.getElementById('sidebarComment').value,
+      leadStatus: document.getElementById('sidebarLeadStatus').value
     };
     
     console.log('🔧 updateData:', updateData);
@@ -1776,17 +1780,18 @@
         ${vc.stage !== false ? '<th style="width:11%">Поточний Етап</th>' : ''}
         ${vc.nextContact !== false ? '<th style="width:10%">Наступний контакт</th>' : ''}
         ${vc.daysLeft !== false ? '<th style="width:6%">Днів залиш.</th>' : ''}
-        ${vc.status !== false ? '<th style="width:10%">Статус</th>' : ''}
+        ${vc.status !== false ? '<th style="width:10%">Статус заявки</th>' : ''}
+        ${vc.leadStatus !== false ? '<th style="width:9%">Статус ліда</th>' : ''}
         <th style="width:auto">Дії</th>
       </tr>
     `;
-    
+
     // Оновлюю чекбокси в модалці
     Object.keys(vc).forEach(key => {
       const checkbox = document.getElementById('col-' + key);
       if (checkbox) checkbox.checked = vc[key] !== false;
     });
-    
+
     const stageNames = {
       'Етап_1_Контакт': '1️⃣ Контакт',
       'Етап_2_Кваліфікація': '2️⃣ Кваліфікація',
@@ -1866,6 +1871,7 @@
           ${vc.nextContact !== false ? `<td>${formatDate(lead.nextContact)}</td>` : ''}
           ${vc.daysLeft !== false ? `<td>${lead.daysLeft || '—'}</td>` : ''}
           ${vc.status !== false ? `<td>${lead.status || '—'}</td>` : ''}
+          ${vc.leadStatus !== false ? `<td>${lead.leadStatus || '—'}</td>` : ''}
           <td style="min-width:200px">
             <div class="lead-actions">
               <button class="btn-details-realty" data-index="${index}">▼ Деталі</button>
@@ -3228,7 +3234,7 @@
   // ⭐ Окремий об'єкт для видимості колонок Нерухомості
   let visibleRealtyColumns = JSON.parse(localStorage.getItem('visibleRealtyColumns')) || {
     id: true, fullName: true, phone: true, type: true, manager: true, stage: true,
-    nextContact: true, daysLeft: true, status: true
+    nextContact: true, daysLeft: true, status: true, leadStatus: true
   };
 
   function toggleRentColumn(columnName) {
@@ -3271,7 +3277,7 @@
   function getColumnIndex(columnName) {
     const columns = [
       'id', 'phone', 'source', 'language', 'type', 'manager',
-      'stage', 'nextContact', 'daysLeft', 'status', 'budget',
+      'stage', 'nextContact', 'daysLeft', 'status', 'leadStatus', 'budget',
       'district', 'metaType', 'area', 'rooms', 'nextAction', 'comment', 'dateAdded'
     ];
     return columns.indexOf(columnName);
@@ -3457,6 +3463,7 @@
     setupMultiSelect('stage-checkbox', 'stageMenu');
     setupMultiSelect('status-checkbox', 'statusMenu');
     setupMultiSelect('source-checkbox', 'sourceMenu');
+    setupMultiSelect('leadStatus-checkbox', 'leadStatusMenu');
 
     // ⭐ ЗА ЗАМОВЧУВАННЯМ ДАШБОРД ЗГОРНУТИЙ
     setTimeout(() => {
@@ -3595,7 +3602,7 @@
 
   function resetAllFilters() {
     // ⭐ Скидаю всі checkboxи
-    document.querySelectorAll('.manager-checkbox, .stage-checkbox, .budget-checkbox, .status-checkbox, .source-checkbox').forEach(cb => {
+    document.querySelectorAll('.manager-checkbox, .stage-checkbox, .budget-checkbox, .status-checkbox, .source-checkbox, .leadStatus-checkbox').forEach(cb => {
       cb.checked = false;
     });
     
@@ -3861,6 +3868,10 @@
       .map(el => el.value)
       .filter(v => v);
 
+    const selectedLeadStatuses = Array.from(document.querySelectorAll('.leadStatus-checkbox:checked'))
+      .map(el => el.value)
+      .filter(v => v);
+
     let filtered = allLeads;
 
     // ⭐ ФІЛЬТР ПО ПОШУКУ - ДЕТАЛЬНИЙ
@@ -3909,6 +3920,11 @@
     // Фільтр по джерелам
     if (selectedSources.length > 0) {
       filtered = filtered.filter(l => selectedSources.includes(l.source));
+    }
+
+    // Фільтр по Статусу ліда (активний/відкладений/неактивний/закритий)
+    if (selectedLeadStatuses.length > 0) {
+      filtered = filtered.filter(l => selectedLeadStatuses.includes(l.leadStatus));
     }
 
     console.log('📋 Фінальний результат:', filtered.length, filtered);
@@ -4029,7 +4045,8 @@
         var labelMap = {
             'ID': 'id', 'ПІБ': 'name', 'Телефон': 'phone', 'Тип': 'type',
             'Менеджер': 'manager', 'Поточний Етап': 'stage', 'Наступний контакт': 'nextContact',
-            'Днів залиш.': 'daysLeft', 'Статус': 'status', 'Бюджет': 'budget',
+            'Днів залиш.': 'daysLeft', 'Статус': 'status', 'Статус заявки': 'status',
+            'Статус ліда': 'leadStatus', 'Бюджет': 'budget',
             'Район': 'district', 'Дії': 'actions'
         };
         for (var h = 0; h < headers.length; h++) {

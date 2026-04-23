@@ -584,6 +584,7 @@ function addLead(payload) {
     sheet.getRange(nextRow, 17).setValue(payload.comment || "");          // Q - Коментар
     sheet.getRange(nextRow, 18).setValue(formatDate(today));              // R - Дата додавання
     sheet.getRange(nextRow, 19).setValue(payload.fullName || '');         // S - ПІБ
+    sheet.getRange(nextRow, 21).setValue(payload.leadStatus || "активний"); // U - Статус ліда
   }
 
   logOperation("Додав новий ліда", leadId, userEmail,
@@ -610,7 +611,7 @@ function getLeads(manager, type) {
       return { success: true, leads: [] };
     }
 
-    const range = isMortgage ? "A2:U" + lastRow : "A2:T" + lastRow;
+    const range = isMortgage ? "A2:U" + lastRow : "A2:U" + lastRow;
     const data = sheet.getRange(range).getValues();
     const typeCol = isMortgage ? 5 : 4;       // F vs E
     const managerCol = isMortgage ? 6 : 5;    // G vs F
@@ -651,7 +652,7 @@ function getLeadById(leadId, phone, type) {
     const isMortgage = type === 'Іпотека';
     const sheetName = getSheetForType(type || '');
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
-    const range = isMortgage ? "A:U" : "A:T";
+    const range = isMortgage ? "A:U" : "A:U";
     const phoneCol = isMortgage ? 2 : 1; // C vs B
     const builder = isMortgage ? buildMortgageLeadObject : buildLeadObject;
     const data = sheet.getRange(range).getValues();
@@ -710,7 +711,7 @@ function getAllLeads(type) {
       return { success: true, leads: [] };
     }
 
-    const range = isMortgage ? "A2:U" + lastRow : "A2:T" + lastRow;
+    const range = isMortgage ? "A2:U" + lastRow : "A2:U" + lastRow;
     const data = sheet.getRange(range).getValues();
     const typeCol = isMortgage ? 5 : 4;
     const builder = isMortgage ? buildMortgageLeadObject : buildLeadObject;
@@ -755,7 +756,7 @@ function getAllLeadsNoFilter(manager, userRole, sheetType) {
       return { success: true, leads: [] };
     }
 
-    const range = isMortgage ? "A2:U" + lastRow : "A2:T" + lastRow;
+    const range = isMortgage ? "A2:U" + lastRow : "A2:U" + lastRow;
     const data = sheet.getRange(range).getValues();
     const managerCol = isMortgage ? 6 : 5; // G vs F
     const builder = isMortgage ? buildMortgageLeadObject : buildLeadObject;
@@ -792,10 +793,10 @@ function softDeleteLead(leadId, rowIndex, type) {
     const sheet = ss.getSheetByName(sheetName);
     const userEmail = Session.getActiveUser().getEmail() || "admin@system";
 
-    // Нерухомість → "Нерухомість Архів" (20 колонок A-T)
+    // Нерухомість → "Нерухомість Архів" (21 колонка A-U)
     // Іпотека → "Іпотека Архів" (21 колонка A-U)
     const archiveName = isMortgage ? "Іпотека Архів" : "Нерухомість Архів";
-    const colCount = isMortgage ? 21 : 20;
+    const colCount = isMortgage ? 21 : 21;
     const archiveSheet = ss.getSheetByName(archiveName);
 
     if (!archiveSheet) {
@@ -1024,6 +1025,11 @@ function updateLead(leadId, payload) {
     if (payload.fullName !== undefined && payload.fullName !== rowData[18]) {
       changes.push("ПІБ: " + (rowData[18] || "—") + " → " + payload.fullName);
       sheet.getRange(targetRow, 19).setValue(payload.fullName);
+    }
+    // U (21) - Статус ліда
+    if (payload.leadStatus !== undefined && payload.leadStatus !== rowData[20]) {
+      changes.push("Статус ліда: " + (rowData[20] || "—") + " → " + payload.leadStatus);
+      sheet.getRange(targetRow, 21).setValue(payload.leadStatus);
     }
   }
 
@@ -1276,7 +1282,8 @@ function buildLeadObject(row, rowIndex) {
     comment: row[16],      // Q - Коментар
     dateAdded: safeDateStr(row[17]),    // R - Дата додавання
     fullName: row[18],     // S - ПІБ
-    deletedStatus: row[19], // T - Статус (ВИДАЛЕНО)
+    deletedStatus: row[19], // T - Статус заявки (legacy, не використовується)
+    leadStatus: row[20],    // U - Статус ліда
     rowIndex: rowIndex     // ⭐ Номер рядка в таблиці (унікальний!)
   };
 }
