@@ -5,7 +5,7 @@
   let leadsCache = [];
   
   // ⭐ API URLs
-  const SCRIPT_URL_REALTY = "https://script.google.com/macros/s/AKfycbxeOtwVDlHNEAOM_o5Pi6OCw39UHddOhJOYimgKQo8CZ6t_UxAFjK75wfTxLAaZSF2A9A/exec";
+  const SCRIPT_URL_REALTY = "https://script.google.com/macros/s/AKfycbw2f_YMt6cBYX3E9C2PJ3HtJz-MDg0jj6uYyth6q81_NHNJPFdzl7pyZP7xHeWxA72crg/exec";
   const SCRIPT_URL_RENT = "https://script.google.com/macros/s/AKfycbzwCHbMZkXwsCLs1oASQnG1XcpB6ROBN-fh297kns0CYuIrjPXpntbfTTl7ytRYUb_h/exec";
   
   // ⭐ Типи оренди
@@ -583,6 +583,7 @@
       console.log('Після фільтрації:', allLeads.length, 'типу:', currentDashboardType);
       renderLeads(allLeads);
       populateFilters();
+      renderSourceStats();
       return;
     }
 
@@ -635,6 +636,7 @@
         console.log('Після фільтрації:', allLeads.length, 'типу:', currentDashboardType);
         renderLeads(allLeads);
         populateFilters();
+        renderSourceStats();
       } else {
         console.error('Помилка:', result.error);
         document.getElementById('leadsTable').innerHTML = `<tr><td colspan="7" style="text-align: center;">❌ ${result.error}</td></tr>`;
@@ -1101,6 +1103,124 @@
     });
 
     grid.innerHTML = html;
+
+    // ⭐ СТАТИСТИКА ПО ДЖЕРЕЛАМ (тільки для адміна)
+    renderSourceStats();
+  }
+
+  // ⭐ СТАН: поточний вибраний період для статистики джерел
+  let currentSourcePeriod = '30';
+
+  function setSourcePeriod(period) {
+    currentSourcePeriod = period;
+    document.querySelectorAll('#sourceStatsPeriods .period-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.period === period);
+    });
+    renderSourceStats();
+  }
+
+  function toggleSubDashboard(key) {
+    const map = {
+      stages: { wrap: 'stagesSubDashboard', body: 'stagesSubBody' },
+      sources: { wrap: 'sourcesSubDashboard', body: 'sourcesSubBody' }
+    };
+    const ids = map[key];
+    if (!ids) return;
+    const wrap = document.getElementById(ids.wrap);
+    const body = document.getElementById(ids.body);
+    if (!wrap || !body) return;
+    const willExpand = body.classList.contains('collapsed');
+    body.classList.toggle('collapsed', !willExpand);
+    wrap.classList.toggle('expanded', willExpand);
+  }
+
+  function renderSourceStats() {
+    const sub = document.getElementById('sourcesSubDashboard');
+    const content = document.getElementById('sourceStatsContent');
+    if (!sub || !content) return;
+
+    // Видимий тільки адміну
+    const role = localStorage.getItem('user_role');
+    if (role !== 'Admin') {
+      sub.style.display = 'none';
+      return;
+    }
+    sub.style.display = '';
+
+    if (!allLeads || allLeads.length === 0) {
+      content.innerHTML = '<div class="source-stats-empty">📭 Немає лідів для аналізу</div>';
+      return;
+    }
+
+    // Фільтр по періоду (lead.dateAdded — строка yyyy-MM-dd)
+    let filtered = allLeads;
+    if (currentSourcePeriod !== 'all') {
+      const days = parseInt(currentSourcePeriod, 10);
+      const cutoff = new Date();
+      cutoff.setHours(0, 0, 0, 0);
+      cutoff.setDate(cutoff.getDate() - days + 1);
+      const cutoffStr = cutoff.getFullYear() + '-'
+        + String(cutoff.getMonth() + 1).padStart(2, '0') + '-'
+        + String(cutoff.getDate()).padStart(2, '0');
+      filtered = allLeads.filter(l => {
+        if (!l.dateAdded) return false;
+        return String(l.dateAdded) >= cutoffStr;
+      });
+    }
+
+    if (filtered.length === 0) {
+      content.innerHTML = '<div class="source-stats-empty">📭 Немає лідів за обраний період</div>';
+      return;
+    }
+
+    // Групую по нормалізованому джерелу (case/пробіли не важливі),
+    // але відображаю найчастіший оригінальний варіант написання.
+    // Наприклад, "Instagram" + "instagram" → ключ "instagram", показую "Instagram".
+    const groups = {}; // key → { total, variants: { "Instagram": 5, "instagram": 2 } }
+    filtered.forEach(l => {
+      const raw = (l.source && String(l.source).trim()) || '';
+      const key = raw ? raw.toLocaleLowerCase() : '__empty__';
+      const display = raw || '(без джерела)';
+      if (!groups[key]) groups[key] = { total: 0, variants: {} };
+      groups[key].total++;
+      groups[key].variants[display] = (groups[key].variants[display] || 0) + 1;
+    });
+
+    const entries = Object.entries(groups)
+      .map(([key, g]) => {
+        const topVariant = Object.entries(g.variants).sort((a, b) => b[1] - a[1])[0][0];
+        return [topVariant, g.total];
+      })
+      .sort((a, b) => b[1] - a[1]);
+    const total = filtered.length;
+    const maxCount = entries[0][1];
+
+    const rowsHtml = entries.map(([src, count]) => {
+      const percent = Math.round((count / total) * 100);
+      const barWidth = Math.round((count / maxCount) * 100);
+      return `
+        <div class="source-stats-row">
+          <div class="source-stats-name" title="${escapeHtml(src)}">${escapeHtml(src)}</div>
+          <div class="source-stats-bar-wrap">
+            <div class="source-stats-bar" style="width: ${barWidth}%"></div>
+          </div>
+          <div class="source-stats-value"><strong>${count}</strong> (${percent}%)</div>
+        </div>
+      `;
+    }).join('');
+
+    const periodLabel = currentSourcePeriod === 'all' ? 'весь час' : `останні ${currentSourcePeriod} днів`;
+
+    content.innerHTML = `
+      <div class="source-stats-list">${rowsHtml}</div>
+      <div class="source-stats-total">Разом: <strong>${total}</strong> лідів за ${periodLabel}</div>
+    `;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str == null ? '' : str);
+    return div.innerHTML;
   }
 
 
@@ -1140,7 +1260,7 @@
     document.getElementById('searchInput').value = '';
     
     // Скидаю всі checkboxes (менеджери, етапи, бюджет, статуси, джерела)
-    document.querySelectorAll('.manager-checkbox, .stage-checkbox, .budget-checkbox, .status-checkbox, .source-checkbox').forEach(cb => {
+    document.querySelectorAll('.manager-checkbox, .stage-checkbox, .budget-checkbox, .status-checkbox, .source-checkbox, .leadStatus-checkbox').forEach(cb => {
       cb.checked = false;
     });
     
@@ -1366,7 +1486,10 @@
     
     // ⭐ ЗАПОВНЮЮ СТАТУС З ДАНИХ ЛІДІВ (формула из таблицы)
     document.getElementById('sidebarStatus').value = lead.status || '';
-    
+
+    // ⭐ СТАТУС ЛІДА (колонка U, редагований dropdown)
+    document.getElementById('sidebarLeadStatus').value = lead.leadStatus || 'активний';
+
     document.getElementById('sidebarNextAction').value = lead.nextAction || '';
     document.getElementById('sidebarComment').value = lead.comment || '';
     
@@ -1659,7 +1782,8 @@
       area: document.getElementById('sidebarArea').value,
       rooms: document.getElementById('sidebarRooms').value,
       nextAction: document.getElementById('sidebarNextAction').value,
-      comment: document.getElementById('sidebarComment').value
+      comment: document.getElementById('sidebarComment').value,
+      leadStatus: document.getElementById('sidebarLeadStatus').value
     };
     
     console.log('🔧 updateData:', updateData);
@@ -1738,6 +1862,7 @@
         console.log('Ліди завантажені:', allLeads.length, 'типу:', type);
         renderLeads(allLeads);
         populateFilters(allLeads);
+        renderSourceStats();
       }
       if (callback) callback();
     })
@@ -1768,25 +1893,26 @@
     // ⭐ ОНОВЛЮЮ ЗАГОЛОВКИ ДЛЯ НЕРУХОМОСТІ (з урахуванням видимості)
     thead.innerHTML = `
       <tr>
-        ${vc.id !== false ? '<th style="width:8%">ID</th>' : ''}
-        ${vc.fullName !== false ? '<th style="width:10%">ПІБ</th>' : ''}
-        ${vc.phone !== false ? '<th style="width:11%">Телефон</th>' : ''}
-        ${vc.type !== false ? '<th style="width:7%">Тип</th>' : ''}
-        ${vc.manager !== false ? '<th style="width:9%">Менеджер</th>' : ''}
-        ${vc.stage !== false ? '<th style="width:11%">Поточний Етап</th>' : ''}
-        ${vc.nextContact !== false ? '<th style="width:10%">Наступний контакт</th>' : ''}
-        ${vc.daysLeft !== false ? '<th style="width:6%">Днів залиш.</th>' : ''}
-        ${vc.status !== false ? '<th style="width:10%">Статус</th>' : ''}
+        ${vc.id !== false ? '<th style="width:6%">ID</th>' : ''}
+        ${vc.fullName !== false ? '<th style="width:9%">ПІБ</th>' : ''}
+        ${vc.phone !== false ? '<th style="width:10%">Телефон</th>' : ''}
+        ${vc.type !== false ? '<th style="width:6%">Тип</th>' : ''}
+        ${vc.manager !== false ? '<th style="width:8%">Менеджер</th>' : ''}
+        ${vc.stage !== false ? '<th style="width:9%">Поточний Етап</th>' : ''}
+        ${vc.nextContact !== false ? '<th style="width:8%">Наступний контакт</th>' : ''}
+        ${vc.daysLeft !== false ? '<th style="width:5%">Днів залиш.</th>' : ''}
+        ${vc.status !== false ? '<th style="width:7%">Статус заявки</th>' : ''}
+        ${vc.leadStatus !== false ? '<th style="width:8%">Статус ліда</th>' : ''}
         <th style="width:auto">Дії</th>
       </tr>
     `;
-    
+
     // Оновлюю чекбокси в модалці
     Object.keys(vc).forEach(key => {
       const checkbox = document.getElementById('col-' + key);
       if (checkbox) checkbox.checked = vc[key] !== false;
     });
-    
+
     const stageNames = {
       'Етап_1_Контакт': '1️⃣ Контакт',
       'Етап_2_Кваліфікація': '2️⃣ Кваліфікація',
@@ -1866,6 +1992,7 @@
           ${vc.nextContact !== false ? `<td>${formatDate(lead.nextContact)}</td>` : ''}
           ${vc.daysLeft !== false ? `<td>${lead.daysLeft || '—'}</td>` : ''}
           ${vc.status !== false ? `<td>${lead.status || '—'}</td>` : ''}
+          ${vc.leadStatus !== false ? `<td>${lead.leadStatus || '—'}</td>` : ''}
           <td style="min-width:200px">
             <div class="lead-actions">
               <button class="btn-details-realty" data-index="${index}">▼ Деталі</button>
@@ -2967,6 +3094,7 @@
         console.log('📊 Ліди завантажені:', allLeads.length);
         renderLeads(allLeads);
         populateFilters(allLeads);
+        renderSourceStats();
         loadStats();
       } else {
         console.error('📊 Помилка:', result.error);
@@ -3228,7 +3356,7 @@
   // ⭐ Окремий об'єкт для видимості колонок Нерухомості
   let visibleRealtyColumns = JSON.parse(localStorage.getItem('visibleRealtyColumns')) || {
     id: true, fullName: true, phone: true, type: true, manager: true, stage: true,
-    nextContact: true, daysLeft: true, status: true
+    nextContact: true, daysLeft: true, status: true, leadStatus: true
   };
 
   function toggleRentColumn(columnName) {
@@ -3271,7 +3399,7 @@
   function getColumnIndex(columnName) {
     const columns = [
       'id', 'phone', 'source', 'language', 'type', 'manager',
-      'stage', 'nextContact', 'daysLeft', 'status', 'budget',
+      'stage', 'nextContact', 'daysLeft', 'status', 'leadStatus', 'budget',
       'district', 'metaType', 'area', 'rooms', 'nextAction', 'comment', 'dateAdded'
     ];
     return columns.indexOf(columnName);
@@ -3457,6 +3585,17 @@
     setupMultiSelect('stage-checkbox', 'stageMenu');
     setupMultiSelect('status-checkbox', 'statusMenu');
     setupMultiSelect('source-checkbox', 'sourceMenu');
+    setupMultiSelect('leadStatus-checkbox', 'leadStatusMenu');
+
+    // ⭐ ПЕРЕМИКАЧ ПЕРІОДУ ДЛЯ СТАТИСТИКИ ДЖЕРЕЛ (делегований клік)
+    const periodsBar = document.getElementById('sourceStatsPeriods');
+    if (periodsBar) {
+      periodsBar.addEventListener('click', (e) => {
+        const btn = e.target.closest('.period-btn');
+        if (!btn) return;
+        setSourcePeriod(btn.dataset.period);
+      });
+    }
 
     // ⭐ ЗА ЗАМОВЧУВАННЯМ ДАШБОРД ЗГОРНУТИЙ
     setTimeout(() => {
@@ -3595,7 +3734,7 @@
 
   function resetAllFilters() {
     // ⭐ Скидаю всі checkboxи
-    document.querySelectorAll('.manager-checkbox, .stage-checkbox, .budget-checkbox, .status-checkbox, .source-checkbox').forEach(cb => {
+    document.querySelectorAll('.manager-checkbox, .stage-checkbox, .budget-checkbox, .status-checkbox, .source-checkbox, .leadStatus-checkbox').forEach(cb => {
       cb.checked = false;
     });
     
@@ -3861,6 +4000,10 @@
       .map(el => el.value)
       .filter(v => v);
 
+    const selectedLeadStatuses = Array.from(document.querySelectorAll('.leadStatus-checkbox:checked'))
+      .map(el => el.value)
+      .filter(v => v);
+
     let filtered = allLeads;
 
     // ⭐ ФІЛЬТР ПО ПОШУКУ - ДЕТАЛЬНИЙ
@@ -3909,6 +4052,11 @@
     // Фільтр по джерелам
     if (selectedSources.length > 0) {
       filtered = filtered.filter(l => selectedSources.includes(l.source));
+    }
+
+    // Фільтр по Статусу ліда (активний/відкладений/неактивний/закритий)
+    if (selectedLeadStatuses.length > 0) {
+      filtered = filtered.filter(l => selectedLeadStatuses.includes(l.leadStatus));
     }
 
     console.log('📋 Фінальний результат:', filtered.length, filtered);
@@ -4029,7 +4177,8 @@
         var labelMap = {
             'ID': 'id', 'ПІБ': 'name', 'Телефон': 'phone', 'Тип': 'type',
             'Менеджер': 'manager', 'Поточний Етап': 'stage', 'Наступний контакт': 'nextContact',
-            'Днів залиш.': 'daysLeft', 'Статус': 'status', 'Бюджет': 'budget',
+            'Днів залиш.': 'daysLeft', 'Статус': 'status', 'Статус заявки': 'status',
+            'Статус ліда': 'leadStatus', 'Бюджет': 'budget',
             'Район': 'district', 'Дії': 'actions'
         };
         for (var h = 0; h < headers.length; h++) {

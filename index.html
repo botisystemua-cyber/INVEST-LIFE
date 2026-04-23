@@ -240,9 +240,9 @@
 
     <!-- ===== ДАШБОРД (КУПІВЛЯ) ===== -->
     <section id="managerSection">
-        <div class="dashboard-header">
+        <div class="dashboard-header" onclick="toggleDashboard()" title="Згорнути/Розгорнути">
             <h1 class="section-title" id="dashboardTitle">📊 Дашборд</h1>
-            <button class="toggle-btn" id="toggleDashboard" onclick="toggleDashboard()" title="Згорнути/Розгорнути">+</button>
+            <button type="button" class="toggle-btn" id="toggleDashboard" tabindex="-1">+</button>
         </div>
         
         <div class="dashboard-content collapsed" id="dashboardContent">
@@ -257,8 +257,37 @@
                 </span>
             </div>
 
-            <div class="dashboard-grid" id="dashboardGrid">
-                <div class="loading">⏳ Завантажаю статистику...</div>
+            <!-- ⭐ ПІД-ДАШБОРД: ЕТАПИ ПРОДАЖ (згорнутий за замовчуванням) -->
+            <div class="sub-dashboard" id="stagesSubDashboard">
+                <button type="button" class="sub-dashboard-header" onclick="toggleSubDashboard('stages')" id="stagesSubToggle">
+                    <span class="sub-dashboard-title">📊 Етапи продаж</span>
+                    <span class="sub-dashboard-arrow">▸</span>
+                </button>
+                <div class="sub-dashboard-body collapsed" id="stagesSubBody">
+                    <div class="dashboard-grid" id="dashboardGrid">
+                        <div class="loading">⏳ Завантажаю статистику...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ⭐ ПІД-ДАШБОРД: ДЖЕРЕЛА ЛІДІВ (тільки Admin, згорнутий за замовчуванням) -->
+            <div class="sub-dashboard" id="sourcesSubDashboard" style="display: none;">
+                <button type="button" class="sub-dashboard-header" onclick="toggleSubDashboard('sources')" id="sourcesSubToggle">
+                    <span class="sub-dashboard-title">📱 Джерела лідів</span>
+                    <span class="sub-dashboard-arrow">▸</span>
+                </button>
+                <div class="sub-dashboard-body collapsed" id="sourcesSubBody">
+                    <div class="source-stats-block" id="sourceStatsBlock">
+                        <div class="source-stats-header">
+                            <div class="source-stats-periods" id="sourceStatsPeriods">
+                                <button type="button" class="period-btn" data-period="7">7 днів</button>
+                                <button type="button" class="period-btn active" data-period="30">30 днів</button>
+                                <button type="button" class="period-btn" data-period="all">Весь час</button>
+                            </div>
+                        </div>
+                        <div id="sourceStatsContent"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -520,8 +549,12 @@
                     <span style="margin-left: 10px;">⏰ Днів залишилось</span>
                 </label>
                 <label style="display: flex; align-items: center; cursor: pointer;">
-                    <input type="checkbox" id="col-status" checked onchange="toggleRealtyColumn('status')"> 
-                    <span style="margin-left: 10px;">✅ Статус</span>
+                    <input type="checkbox" id="col-status" checked onchange="toggleRealtyColumn('status')">
+                    <span style="margin-left: 10px;">✅ Статус заявки</span>
+                </label>
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="col-leadStatus" checked onchange="toggleRealtyColumn('leadStatus')">
+                    <span style="margin-left: 10px;">⭐ Статус ліда</span>
                 </label>
             </div>
             
@@ -774,10 +807,20 @@
         </div>
         
         <div>
-            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">💰 Статус</label>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">💰 Статус заявки</label>
             <input type="text" id="sidebarStatus" placeholder="На часі / Просрочено" disabled style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; background: #f5f5f5; font-size: 0.9rem;">
         </div>
-        
+
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">⭐ Статус ліда</label>
+            <select id="sidebarLeadStatus" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+                <option value="активний">🟢 активний</option>
+                <option value="відкладений">🟡 відкладений</option>
+                <option value="неактивний">⚫ неактивний</option>
+                <option value="закритий">🔴 закритий</option>
+            </select>
+        </div>
+
         <div>
             <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">📌 Наступний етап</label>
             <input type="text" id="sidebarNextAction" placeholder="Контакт, Кваліфікація, Підбір..." list="sidebarNextActionList" onfocus="this.select()" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
@@ -1880,15 +1923,42 @@
                 </div>
             </div>
 
-            <!-- Фільтр Статуси -->
+            <!-- Фільтр Статус заявки -->
             <div class="filter-dropdown">
-                <button class="filter-btn" id="statusBtn">📊 Статуси</button>
+                <button class="filter-btn" id="statusBtn">📊 Статус заявки</button>
                 <div class="filter-menu" id="statusMenu">
                     <div class="filter-option">
                         <input type="checkbox" id="status-all" class="status-checkbox" value="" onchange="filterLeads()">
                         <label for="status-all">Всі статуси</label>
                     </div>
                     <div id="sidebar_statusOptions"></div>
+                </div>
+            </div>
+
+            <!-- Фільтр Статус ліда -->
+            <div class="filter-dropdown">
+                <button class="filter-btn" id="leadStatusBtn">⭐ Статус ліда</button>
+                <div class="filter-menu" id="leadStatusMenu">
+                    <div class="filter-option">
+                        <input type="checkbox" id="leadStatus-all" class="leadStatus-checkbox" value="" onchange="filterLeads()">
+                        <label for="leadStatus-all">Всі</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" class="leadStatus-checkbox" value="активний" onchange="filterLeads()">
+                        <label>🟢 активний</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" class="leadStatus-checkbox" value="відкладений" onchange="filterLeads()">
+                        <label>🟡 відкладений</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" class="leadStatus-checkbox" value="неактивний" onchange="filterLeads()">
+                        <label>⚫ неактивний</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" class="leadStatus-checkbox" value="закритий" onchange="filterLeads()">
+                        <label>🔴 закритий</label>
+                    </div>
                 </div>
             </div>
 
