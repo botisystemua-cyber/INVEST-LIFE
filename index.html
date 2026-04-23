@@ -260,6 +260,19 @@
             <div class="dashboard-grid" id="dashboardGrid">
                 <div class="loading">⏳ Завантажаю статистику...</div>
             </div>
+
+            <!-- ⭐ СТАТИСТИКА ПО ДЖЕРЕЛАМ (тільки для адміна) -->
+            <div class="source-stats-block" id="sourceStatsBlock" style="display: none;">
+                <div class="source-stats-header">
+                    <h3 class="source-stats-title">📱 Джерела лідів</h3>
+                    <div class="source-stats-periods" id="sourceStatsPeriods">
+                        <button type="button" class="period-btn" data-period="7">7 днів</button>
+                        <button type="button" class="period-btn active" data-period="30">30 днів</button>
+                        <button type="button" class="period-btn" data-period="all">Весь час</button>
+                    </div>
+                </div>
+                <div id="sourceStatsContent"></div>
+            </div>
         </div>
 
     </section>

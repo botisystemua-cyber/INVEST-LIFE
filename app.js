@@ -5,7 +5,7 @@
   let leadsCache = [];
   
   // ⭐ API URLs
-  const SCRIPT_URL_REALTY = "https://script.google.com/macros/s/AKfycbxeOtwVDlHNEAOM_o5Pi6OCw39UHddOhJOYimgKQo8CZ6t_UxAFjK75wfTxLAaZSF2A9A/exec";
+  const SCRIPT_URL_REALTY = "https://script.google.com/macros/s/AKfycbw2f_YMt6cBYX3E9C2PJ3HtJz-MDg0jj6uYyth6q81_NHNJPFdzl7pyZP7xHeWxA72crg/exec";
   const SCRIPT_URL_RENT = "https://script.google.com/macros/s/AKfycbzwCHbMZkXwsCLs1oASQnG1XcpB6ROBN-fh297kns0CYuIrjPXpntbfTTl7ytRYUb_h/exec";
   
   // ⭐ Типи оренди
@@ -583,6 +583,7 @@
       console.log('Після фільтрації:', allLeads.length, 'типу:', currentDashboardType);
       renderLeads(allLeads);
       populateFilters();
+      renderSourceStats();
       return;
     }
 
@@ -635,6 +636,7 @@
         console.log('Після фільтрації:', allLeads.length, 'типу:', currentDashboardType);
         renderLeads(allLeads);
         populateFilters();
+        renderSourceStats();
       } else {
         console.error('Помилка:', result.error);
         document.getElementById('leadsTable').innerHTML = `<tr><td colspan="7" style="text-align: center;">❌ ${result.error}</td></tr>`;
@@ -1101,6 +1103,98 @@
     });
 
     grid.innerHTML = html;
+
+    // ⭐ СТАТИСТИКА ПО ДЖЕРЕЛАМ (тільки для адміна)
+    renderSourceStats();
+  }
+
+  // ⭐ СТАН: поточний вибраний період для статистики джерел
+  let currentSourcePeriod = '30';
+
+  function setSourcePeriod(period) {
+    currentSourcePeriod = period;
+    document.querySelectorAll('#sourceStatsPeriods .period-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.period === period);
+    });
+    renderSourceStats();
+  }
+
+  function renderSourceStats() {
+    const block = document.getElementById('sourceStatsBlock');
+    const content = document.getElementById('sourceStatsContent');
+    if (!block || !content) return;
+
+    // Видимий тільки адміну
+    const role = localStorage.getItem('user_role');
+    if (role !== 'Admin') {
+      block.style.display = 'none';
+      return;
+    }
+    block.style.display = 'block';
+
+    if (!allLeads || allLeads.length === 0) {
+      content.innerHTML = '<div class="source-stats-empty">📭 Немає лідів для аналізу</div>';
+      return;
+    }
+
+    // Фільтр по періоду (lead.dateAdded — строка yyyy-MM-dd)
+    let filtered = allLeads;
+    if (currentSourcePeriod !== 'all') {
+      const days = parseInt(currentSourcePeriod, 10);
+      const cutoff = new Date();
+      cutoff.setHours(0, 0, 0, 0);
+      cutoff.setDate(cutoff.getDate() - days + 1);
+      const cutoffStr = cutoff.getFullYear() + '-'
+        + String(cutoff.getMonth() + 1).padStart(2, '0') + '-'
+        + String(cutoff.getDate()).padStart(2, '0');
+      filtered = allLeads.filter(l => {
+        if (!l.dateAdded) return false;
+        return String(l.dateAdded) >= cutoffStr;
+      });
+    }
+
+    if (filtered.length === 0) {
+      content.innerHTML = '<div class="source-stats-empty">📭 Немає лідів за обраний період</div>';
+      return;
+    }
+
+    // Групую по джерелу
+    const counts = {};
+    filtered.forEach(l => {
+      const src = (l.source && String(l.source).trim()) || '(без джерела)';
+      counts[src] = (counts[src] || 0) + 1;
+    });
+
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const total = filtered.length;
+    const maxCount = entries[0][1];
+
+    const rowsHtml = entries.map(([src, count]) => {
+      const percent = Math.round((count / total) * 100);
+      const barWidth = Math.round((count / maxCount) * 100);
+      return `
+        <div class="source-stats-row">
+          <div class="source-stats-name" title="${escapeHtml(src)}">${escapeHtml(src)}</div>
+          <div class="source-stats-bar-wrap">
+            <div class="source-stats-bar" style="width: ${barWidth}%"></div>
+          </div>
+          <div class="source-stats-value"><strong>${count}</strong> (${percent}%)</div>
+        </div>
+      `;
+    }).join('');
+
+    const periodLabel = currentSourcePeriod === 'all' ? 'весь час' : `останні ${currentSourcePeriod} днів`;
+
+    content.innerHTML = `
+      <div class="source-stats-list">${rowsHtml}</div>
+      <div class="source-stats-total">Разом: <strong>${total}</strong> лідів за ${periodLabel}</div>
+    `;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str == null ? '' : str);
+    return div.innerHTML;
   }
 
 
@@ -1742,6 +1836,7 @@
         console.log('Ліди завантажені:', allLeads.length, 'типу:', type);
         renderLeads(allLeads);
         populateFilters(allLeads);
+        renderSourceStats();
       }
       if (callback) callback();
     })
@@ -2973,6 +3068,7 @@
         console.log('📊 Ліди завантажені:', allLeads.length);
         renderLeads(allLeads);
         populateFilters(allLeads);
+        renderSourceStats();
         loadStats();
       } else {
         console.error('📊 Помилка:', result.error);
@@ -3464,6 +3560,16 @@
     setupMultiSelect('status-checkbox', 'statusMenu');
     setupMultiSelect('source-checkbox', 'sourceMenu');
     setupMultiSelect('leadStatus-checkbox', 'leadStatusMenu');
+
+    // ⭐ ПЕРЕМИКАЧ ПЕРІОДУ ДЛЯ СТАТИСТИКИ ДЖЕРЕЛ (делегований клік)
+    const periodsBar = document.getElementById('sourceStatsPeriods');
+    if (periodsBar) {
+      periodsBar.addEventListener('click', (e) => {
+        const btn = e.target.closest('.period-btn');
+        if (!btn) return;
+        setSourcePeriod(btn.dataset.period);
+      });
+    }
 
     // ⭐ ЗА ЗАМОВЧУВАННЯМ ДАШБОРД ЗГОРНУТИЙ
     setTimeout(() => {
