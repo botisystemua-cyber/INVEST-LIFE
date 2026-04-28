@@ -2462,7 +2462,7 @@
   // ========== ІПОТЕКА: ФУНКЦІЇ ==========
 
   // ⭐ Видимість колонок Іпотеки
-  let visibleMortgageColumns = { id: true, fullName: true, phone: true, manager: true, stage: true, nextContact: true, daysLeft: true, status: true };
+  let visibleMortgageColumns = { id: true, fullName: true, phone: true, manager: true, stage: true, nextContact: true, daysLeft: true, status: true, leadStatus: true };
 
   function toggleMortgageColumn(col) {
     visibleMortgageColumns[col] = !visibleMortgageColumns[col];
@@ -2486,6 +2486,7 @@
         ${vc.nextContact !== false ? '<th style="width:10%">Наступний контакт</th>' : ''}
         ${vc.daysLeft !== false ? '<th style="width:6%">Днів залиш.</th>' : ''}
         ${vc.status !== false ? '<th style="width:10%">Статус</th>' : ''}
+        ${vc.leadStatus !== false ? '<th style="width:8%">Статус ліда</th>' : ''}
         <th style="width:auto">Дії</th>
       </tr>
     `;
@@ -2554,6 +2555,7 @@
           ${vc.nextContact !== false ? `<td>${fmtDate(lead.nextContact)}</td>` : ''}
           ${vc.daysLeft !== false ? `<td>${lead.daysLeft || '—'}</td>` : ''}
           ${vc.status !== false ? `<td>${lead.status || '—'}</td>` : ''}
+          ${vc.leadStatus !== false ? `<td>${lead.leadStatus || '—'}</td>` : ''}
           <td style="min-width:200px">
             <div class="lead-actions">
               <button class="btn-details-realty" data-index="${index}">▼ Деталі</button>
@@ -2681,6 +2683,7 @@
     document.getElementById('mortSource').value = lead.source || '';
     document.getElementById('mortLanguage').value = lead.language || '';
     document.getElementById('mortStage').value = lead.stage || 'Етап_1_Контакт';
+    document.getElementById('mortLeadStatus').value = lead.leadStatus || 'активний';
     document.getElementById('mortBudget').value = lead.budget || '';
     document.getElementById('mortTaxResidency').value = lead.taxResidency || '';
     document.getElementById('mortIncome').value = lead.income || '';
@@ -2730,6 +2733,7 @@
       type: 'Іпотека',
       manager: getSelectedManagersValue('mortManager'),
       stage: document.getElementById('mortStage').value,
+      leadStatus: document.getElementById('mortLeadStatus').value,
       nextContact: document.getElementById('mortNextContact').value,
       budget: document.getElementById('mortBudget').value,
       taxResidency: document.getElementById('mortTaxResidency').value,
@@ -2796,6 +2800,7 @@
       language: document.getElementById('addMortLanguage').value,
       type: 'Іпотека',
       manager: document.getElementById('addMortManager').value,
+      leadStatus: document.getElementById('addMortLeadStatus').value,
       budget: document.getElementById('addMortBudget').value,
       taxResidency: document.getElementById('addMortTaxResidency').value,
       income: document.getElementById('addMortIncome').value,

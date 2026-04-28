@@ -1566,6 +1566,7 @@
                 <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-nextContact" checked onchange="toggleMortgageColumn('nextContact')"><span style="margin-left: 10px;">📅 Наступний контакт</span></label>
                 <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-daysLeft" checked onchange="toggleMortgageColumn('daysLeft')"><span style="margin-left: 10px;">⏰ Днів залишилось</span></label>
                 <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-status" checked onchange="toggleMortgageColumn('status')"><span style="margin-left: 10px;">✅ Статус</span></label>
+                <label style="display: flex; align-items: center; cursor: pointer;"><input type="checkbox" id="mort-col-leadStatus" checked onchange="toggleMortgageColumn('leadStatus')"><span style="margin-left: 10px;">⭐ Статус ліда</span></label>
             </div>
             <hr style="margin: 15px 0; border: none; border-top: 1px solid #eee;">
             <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">📋 Деталі (в розгортці):</p>
@@ -1642,6 +1643,16 @@
         </div>
 
         <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">⭐ Статус ліда</label>
+            <select id="mortLeadStatus" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+                <option value="активний">🟢 активний</option>
+                <option value="відкладений">🟡 відкладений</option>
+                <option value="неактивний">⚫ неактивний</option>
+                <option value="закритий">🔴 закритий</option>
+            </select>
+        </div>
+
+        <div>
             <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">📅 Наступний контакт</label>
             <input type="date" id="mortNextContact" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
         </div>
@@ -1711,6 +1722,7 @@
             <div class="form-group"><label class="form-label">🔗 Джерело</label><input type="text" class="form-input" id="addMortSource" list="addMortSourceList"><datalist id="addMortSourceList"><option value="Telegram"><option value="WhatsApp"><option value="Viber"><option value="Instagram"><option value="Facebook"><option value="Сайт"><option value="Телефон"><option value="Інше"></datalist></div>
             <div class="form-group"><label class="form-label">🌐 Мова</label><select class="form-select" id="addMortLanguage"><option value="">--</option><option value="Українська">Українська</option><option value="Російська">Російська</option><option value="Англійська">Англійська</option></select></div>
             <div class="form-group"><label class="form-label">👤 Менеджер *</label><select class="form-select" id="addMortManager" required><option value="">-- Вибери менеджера --</option></select></div>
+            <div class="form-group"><label class="form-label">⭐ Статус ліда</label><select class="form-select" id="addMortLeadStatus"><option value="активний">🟢 активний</option><option value="відкладений">🟡 відкладений</option><option value="неактивний">⚫ неактивний</option><option value="закритий">🔴 закритий</option></select></div>
             <div class="form-group"><label class="form-label">💰 Бюджет</label><input type="text" class="form-input" id="addMortBudget" list="addMortBudgetList"><datalist id="addMortBudgetList"><option value="до 100k€"><option value="100k - 200k€"><option value="200k - 300k€"><option value="300k - 500k€"><option value="500k+€"></datalist></div>
             <div class="form-group"><label class="form-label">🏛 Податкова резиденція</label><input type="text" class="form-input" id="addMortTaxResidency"></div>
             <div class="form-group"><label class="form-label">💵 Дохід</label><input type="text" class="form-input" id="addMortIncome"></div>
