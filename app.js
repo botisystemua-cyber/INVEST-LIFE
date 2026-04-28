@@ -3358,16 +3358,18 @@
   }
 
   // ⭐ Окремий об'єкт для видимості колонок Оренди
-  let visibleRentColumns = JSON.parse(localStorage.getItem('visibleRentColumns')) || {
+  const RENT_COLUMNS_DEFAULTS = {
     id: true, fullName: true, phone: true, type: true, manager: true, stage: true,
     nextContact: true, daysLeft: true, status: true, leadStatus: true
   };
+  let visibleRentColumns = Object.assign({}, RENT_COLUMNS_DEFAULTS, JSON.parse(localStorage.getItem('visibleRentColumns')) || {});
 
   // ⭐ Окремий об'єкт для видимості колонок Нерухомості
-  let visibleRealtyColumns = JSON.parse(localStorage.getItem('visibleRealtyColumns')) || {
+  const REALTY_COLUMNS_DEFAULTS = {
     id: true, fullName: true, phone: true, type: true, manager: true, stage: true,
     nextContact: true, daysLeft: true, status: true, leadStatus: true
   };
+  let visibleRealtyColumns = Object.assign({}, REALTY_COLUMNS_DEFAULTS, JSON.parse(localStorage.getItem('visibleRealtyColumns')) || {});
 
   function toggleRentColumn(columnName) {
     visibleRentColumns[columnName] = !visibleRentColumns[columnName];
