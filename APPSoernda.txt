@@ -178,8 +178,8 @@ function getLeads(manager, type) {
       return { success: true, leads: [] };
     }
 
-    // A:W (23 колонки)
-    const data = sheet.getRange("A2:W" + lastRow).getValues();
+    // A:X (24 колонки)
+    const data = sheet.getRange("A2:X" + lastRow).getValues();
     const leads = [];
 
     for (let i = 0; i < data.length; i++) {
@@ -217,8 +217,8 @@ function getAllLeads(type) {
       return { success: true, leads: [] };
     }
 
-    // A:W (23 колонки)
-    const data = sheet.getRange("A2:W" + lastRow).getValues();
+    // A:X (24 колонки)
+    const data = sheet.getRange("A2:X" + lastRow).getValues();
     const leads = [];
 
     for (let i = 0; i < data.length; i++) {
@@ -254,8 +254,8 @@ function getAllLeadsNoFilter(manager, userRole) {
       return { success: true, leads: [] };
     }
 
-    // A:W (23 колонки)
-    const data = sheet.getRange("A2:W" + lastRow).getValues();
+    // A:X (24 колонки)
+    const data = sheet.getRange("A2:X" + lastRow).getValues();
     const leads = [];
 
     for (let i = 0; i < data.length; i++) {
@@ -317,6 +317,7 @@ function buildLeadObject(row, rowIndex) {
     contactTime: row[20],    // U - Час наступного контакту
     fullName: row[21],       // V - ПІБ
     deletedStatus: row[22],  // W - Статус (ВИДАЛЕНО)
+    leadStatus: row[23],     // X - Статус ліда
     rowIndex: rowIndex       // Номер рядка
   };
 }
@@ -362,6 +363,7 @@ function addLead(payload) {
     sheet.getRange(nextRow, 20).setValue(safeDateStr(new Date()));       // T - Дата додавання
     sheet.getRange(nextRow, 21).setValue(payload.contactTime || '');    // U - Час контакту
     sheet.getRange(nextRow, 22).setValue(payload.fullName || '');       // V - ПІБ
+    sheet.getRange(nextRow, 24).setValue(payload.leadStatus || 'активний'); // X - Статус ліда
 
     logOperation("Додав ліда", leadId, userEmail, "Тип: " + payload.type + ", Менеджер: " + payload.manager + ", ПІБ: " + (payload.fullName || "—"));
 
@@ -401,10 +403,10 @@ function softDeleteLead(leadId, rowIndex) {
       return { success: false, error: "Ліда не знайдено" };
     }
 
-    // Копіюємо рядок в архів (A-W, 23 колонки)
-    const rowData = sheet.getRange(targetRow, 1, 1, 23).getValues()[0];
+    // Копіюємо рядок в архів (A-X, 24 колонки)
+    const rowData = sheet.getRange(targetRow, 1, 1, 24).getValues()[0];
     const archiveNextRow = archiveSheet.getLastRow() + 1;
-    archiveSheet.getRange(archiveNextRow, 1, 1, 23).setValues([rowData]);
+    archiveSheet.getRange(archiveNextRow, 1, 1, 24).setValues([rowData]);
 
     // Видаляємо рядок з основного аркуша
     sheet.deleteRow(targetRow);
@@ -449,8 +451,8 @@ function updateLead(leadId, payload) {
       return { success: false, error: "Ліда не знайдено" };
     }
     
-    // Читаю 22 колонки (A:V)
-    const rowData = sheet.getRange(targetRow, 1, 1, 23).getValues()[0];
+    // Читаю 24 колонки (A:X)
+    const rowData = sheet.getRange(targetRow, 1, 1, 24).getValues()[0];
     let changes = [];
     
     // Оновлюю поля
@@ -529,7 +531,12 @@ function updateLead(leadId, payload) {
       changes.push("ПІБ: " + (rowData[21] || "—") + " → " + payload.fullName);
       sheet.getRange(targetRow, 22).setValue(payload.fullName);
     }
-    
+    // ⭐ Статус ліда (колонка X = 24)
+    if (payload.leadStatus !== undefined && payload.leadStatus !== rowData[23]) {
+      changes.push("Статус ліда: " + (rowData[23] || "—") + " → " + payload.leadStatus);
+      sheet.getRange(targetRow, 24).setValue(payload.leadStatus);
+    }
+
     if (changes.length > 0) {
       logOperation("Редагував ліда", leadId, userEmail, changes.join(" | "));
       return { success: true, message: "Редаговано " + changes.length + " полей", changes: changes };

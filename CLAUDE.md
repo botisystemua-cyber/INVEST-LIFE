@@ -15,8 +15,8 @@ CRM система для управління лідами нерухомост
 
 ## API ендпоінти
 
-- **Нерухомість:** `https://script.google.com/macros/s/AKfycbw2f_YMt6cBYX3E9C2PJ3HtJz-MDg0jj6uYyth6q81_NHNJPFdzl7pyZP7xHeWxA72crg/exec`
-- **Оренда:** `https://script.google.com/macros/s/AKfycbw8eSq8QVd2fxeXeU_blzLLOVUAIpz-wMiL6AFNMx98MZDLD8_lqGesmFWs8qHevck/exec`
+- **Нерухомість:** `https://script.google.com/macros/s/AKfycby1qsowLCns24ZPY5jdDKa6Jk_ati8QomkpIIek4REd5jIgcst0mr1SFezRx94X0UWJOg/exec`
+- **Оренда:** `https://script.google.com/macros/s/AKfycbwwIliPDqM5D4W6uyx1v6V3HsOf02H6581AEZSEK_BVpjjSho5T72jB1pCv3p9y847Y/exec`
 
 ## Типи лідів
 

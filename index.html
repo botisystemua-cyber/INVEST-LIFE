@@ -612,8 +612,12 @@
                     <span style="margin-left: 10px;">⏰ Днів залишилось</span>
                 </label>
                 <label style="display: flex; align-items: center; cursor: pointer;">
-                    <input type="checkbox" id="rent-col-status" checked onchange="toggleRentColumn('status')"> 
+                    <input type="checkbox" id="rent-col-status" checked onchange="toggleRentColumn('status')">
                     <span style="margin-left: 10px;">✅ Статус</span>
+                </label>
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="rent-col-leadStatus" checked onchange="toggleRentColumn('leadStatus')">
+                    <span style="margin-left: 10px;">⭐ Статус ліда</span>
                 </label>
             </div>
             
@@ -987,7 +991,18 @@
                 <option value="Етап_8_Виселення">8️⃣ Виселення</option>
             </select>
         </div>
-        
+
+        <!-- Статус ліда -->
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.3rem; color: #333; font-size: 0.85rem;">⭐ Статус ліда</label>
+            <select id="rentLeadStatus" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem;">
+                <option value="активний">🟢 активний</option>
+                <option value="відкладений">🟡 відкладений</option>
+                <option value="неактивний">⚫ неактивний</option>
+                <option value="закритий">🔴 закритий</option>
+            </select>
+        </div>
+
         <!-- Дата контакту -->
         <div>
             <label style="display: block; font-weight: bold; margin-bottom: 0.3rem; color: #333; font-size: 0.85rem;">📅 Дата контакту</label>
@@ -1230,7 +1245,18 @@
                 <option value="Не назначено">❌ Не назначено</option>
             </select>
         </div>
-        
+
+        <!-- Статус ліда -->
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.3rem; color: #333; font-size: 0.85rem;">⭐ Статус ліда</label>
+            <select id="addRentLeadStatus" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem;">
+                <option value="активний">🟢 активний</option>
+                <option value="відкладений">🟡 відкладений</option>
+                <option value="неактивний">⚫ неактивний</option>
+                <option value="закритий">🔴 закритий</option>
+            </select>
+        </div>
+
         <!-- Бюджет -->
         <div>
             <label style="display: block; font-weight: bold; margin-bottom: 0.3rem; color: #333; font-size: 0.85rem;">💰 Бюджет</label>
