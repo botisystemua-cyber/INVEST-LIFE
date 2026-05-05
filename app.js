@@ -1120,10 +1120,24 @@
 
     if (period === 'custom') {
       // Показую панель календаря; не чіпаю активну кнопку, поки не застосували
-      if (rangePanel) rangePanel.style.display = '';
+      if (rangePanel) rangePanel.style.display = 'flex';
       document.querySelectorAll('#sourceStatsPeriods .period-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.period === 'custom');
       });
+
+      // Автозаповнюю інпути дефолтними значеннями (останні 30 днів),
+      // щоб юзер одразу бачив поля і міг або застосувати, або змінити
+      const fromEl = document.getElementById('sourceRangeFrom');
+      const toEl = document.getElementById('sourceRangeTo');
+      const today = new Date();
+      const monthAgo = new Date();
+      monthAgo.setDate(monthAgo.getDate() - 29);
+      const ymd = (d) => d.getFullYear() + '-'
+        + String(d.getMonth() + 1).padStart(2, '0') + '-'
+        + String(d.getDate()).padStart(2, '0');
+      if (fromEl && !fromEl.value) fromEl.value = customRangeFrom || ymd(monthAgo);
+      if (toEl && !toEl.value) toEl.value = customRangeTo || ymd(today);
+
       // Якщо діапазон уже був заданий — одразу пере-рендеримо з ним
       if (customRangeFrom && customRangeTo) {
         currentSourcePeriod = 'custom';
