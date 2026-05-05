@@ -1110,8 +1110,29 @@
 
   // ⭐ СТАН: поточний вибраний період для статистики джерел
   let currentSourcePeriod = '30';
+  let customRangeFrom = ''; // yyyy-MM-dd
+  let customRangeTo = '';   // yyyy-MM-dd
 
   function setSourcePeriod(period) {
+    const rangePanel = document.getElementById('sourceStatsRange');
+    const errEl = document.getElementById('sourceRangeError');
+    if (errEl) errEl.textContent = '';
+
+    if (period === 'custom') {
+      // Показую панель календаря; не чіпаю активну кнопку, поки не застосували
+      if (rangePanel) rangePanel.style.display = '';
+      document.querySelectorAll('#sourceStatsPeriods .period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === 'custom');
+      });
+      // Якщо діапазон уже був заданий — одразу пере-рендеримо з ним
+      if (customRangeFrom && customRangeTo) {
+        currentSourcePeriod = 'custom';
+        renderSourceStats();
+      }
+      return;
+    }
+
+    if (rangePanel) rangePanel.style.display = 'none';
     currentSourcePeriod = period;
     document.querySelectorAll('#sourceStatsPeriods .period-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.period === period);
@@ -1154,7 +1175,13 @@
 
     // Фільтр по періоду (lead.dateAdded — строка yyyy-MM-dd)
     let filtered = allLeads;
-    if (currentSourcePeriod !== 'all') {
+    if (currentSourcePeriod === 'custom' && customRangeFrom && customRangeTo) {
+      filtered = allLeads.filter(l => {
+        if (!l.dateAdded) return false;
+        const d = String(l.dateAdded);
+        return d >= customRangeFrom && d <= customRangeTo;
+      });
+    } else if (currentSourcePeriod !== 'all' && currentSourcePeriod !== 'custom') {
       const days = parseInt(currentSourcePeriod, 10);
       const cutoff = new Date();
       cutoff.setHours(0, 0, 0, 0);
@@ -1209,7 +1236,14 @@
       `;
     }).join('');
 
-    const periodLabel = currentSourcePeriod === 'all' ? 'весь час' : `останні ${currentSourcePeriod} днів`;
+    let periodLabel;
+    if (currentSourcePeriod === 'all') {
+      periodLabel = 'весь час';
+    } else if (currentSourcePeriod === 'custom') {
+      periodLabel = `${formatDateSafe(customRangeFrom)} – ${formatDateSafe(customRangeTo)}`;
+    } else {
+      periodLabel = `останні ${currentSourcePeriod} днів`;
+    }
 
     content.innerHTML = `
       <div class="source-stats-list">${rowsHtml}</div>
@@ -3606,6 +3640,31 @@
         const btn = e.target.closest('.period-btn');
         if (!btn) return;
         setSourcePeriod(btn.dataset.period);
+      });
+    }
+
+    // ⭐ КАЛЕНДАР: застосування свого діапазону для статистики джерел
+    const applyBtn = document.getElementById('sourceRangeApply');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', () => {
+        const fromEl = document.getElementById('sourceRangeFrom');
+        const toEl = document.getElementById('sourceRangeTo');
+        const errEl = document.getElementById('sourceRangeError');
+        const from = fromEl ? fromEl.value : '';
+        const to = toEl ? toEl.value : '';
+        if (!from || !to) {
+          if (errEl) errEl.textContent = 'Вкажіть обидві дати';
+          return;
+        }
+        if (from > to) {
+          if (errEl) errEl.textContent = '«Від» має бути раніше «До»';
+          return;
+        }
+        if (errEl) errEl.textContent = '';
+        customRangeFrom = from;
+        customRangeTo = to;
+        currentSourcePeriod = 'custom';
+        renderSourceStats();
       });
     }
 

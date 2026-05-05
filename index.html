@@ -283,7 +283,14 @@
                                 <button type="button" class="period-btn" data-period="7">7 днів</button>
                                 <button type="button" class="period-btn active" data-period="30">30 днів</button>
                                 <button type="button" class="period-btn" data-period="all">Весь час</button>
+                                <button type="button" class="period-btn" data-period="custom" title="Вибрати свій період">📅</button>
                             </div>
+                        </div>
+                        <div class="source-stats-range" id="sourceStatsRange" style="display:none;">
+                            <label>Від <input type="date" id="sourceRangeFrom"></label>
+                            <label>До <input type="date" id="sourceRangeTo"></label>
+                            <button type="button" id="sourceRangeApply" class="range-apply-btn">Застосувати</button>
+                            <span class="range-error" id="sourceRangeError"></span>
                         </div>
                         <div id="sourceStatsContent"></div>
                     </div>
