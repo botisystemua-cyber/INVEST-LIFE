@@ -1,0 +1,72 @@
+# .htaccess для investlife.com.ua — З РЕДІРЕКТОМ на investlife.es
+# Підготовлено: 27.08.2026
+# Шлях на сервері: /home2/investl2/investlife.com.ua/.htaccess
+#
+# Що додано: блок "Редірект на іспанський сайт" на самому початку.
+# Решта файлу — без змін, як було.
+#
+# Винятки (НЕ редіректяться):
+#   /wp-admin      — щоб лишався доступ до адмінки
+#   /wp-login.php  — форма входу
+#   /wp-content    — картинки, стилі, завантаження
+#   /wp-includes   — службові файли WordPress
+#   /.well-known   — КРИТИЧНО: через цей шлях Let's Encrypt поновлює
+#                    сертифікат. Без винятку SSL перестане поновлюватись.
+#
+# R=302 — тимчасовий редірект (легко відкотити).
+#         Коли переконаєтесь, що все працює як треба — можна змінити на R=301.
+# QSA   — зберігає параметри з рекламного посилання (utm_source тощо)
+# ref=comua — мітка, за якою в аналітиці investlife.es видно трафік
+#             з українського домену
+
+# --- Редірект на іспанський сайт ---
+RewriteEngine On
+
+RewriteCond %{REQUEST_URI} !^/wp-admin
+RewriteCond %{REQUEST_URI} !^/wp-login\.php
+RewriteCond %{REQUEST_URI} !^/wp-content
+RewriteCond %{REQUEST_URI} !^/wp-includes
+RewriteCond %{REQUEST_URI} !^/\.well-known
+
+RewriteRule ^(.*)$ https://www.investlife.es/?ref=comua [R=302,L,QSA]
+
+# BEGIN LSCACHE
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+<IfModule LiteSpeed>
+RewriteEngine on
+CacheLookup on
+RewriteRule .* - [E=Cache-Control:no-autoflush]
+RewriteRule \.litespeed_conf\.dat - [F,L]
+
+### marker CACHE RESOURCE start ###
+RewriteRule wp-content/.*/[^/]*(responsive|css|js|dynamic|loader|fonts)\.php - [E=cache-control:max-age=3600]
+### marker CACHE RESOURCE end ###
+
+### marker FAVICON start ###
+RewriteRule favicon\.ico$ - [E=cache-control:max-age=86400]
+### marker FAVICON end ###
+
+</IfModule>
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+# END LSCACHE
+# BEGIN NON_LSCACHE
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+# END NON_LSCACHE
+# This file was updated by Duplicator on 2025-03-31 09:54:43.
+# See the original_files_ folder for the original source_site_htaccess file.
+# BEGIN WordPress
+# Директиви (рядки) між `BEGIN WordPress` і `END WordPress`
+# створені автоматично і підлягають змінам тільки через фільтри WordPress.
+# Зміни зроблені вручну між цими маркерами будуть перезаписані.
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+
+# END WordPress
